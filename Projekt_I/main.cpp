@@ -1,6 +1,8 @@
 #include<iostream>
+#include "PriorityQueue.h"
 
 int main(){
-    std::cout<<"Hello world";
+    PriorityQueue queue;
+    queue.printQueue();
     return 0;
 }
