@@ -12,12 +12,17 @@ class PriorityQueue {
    private:
     Node *head;
     Node *tail;
-
+    void pop();
    public:
+    // Konstruktor
     PriorityQueue();
+
     void push(unsigned int priority, const std::string &packet);
-    void printQueue();
+
+    void display();
+
     bool isEmpty();
 
+    void clear();
 };
 #endif
