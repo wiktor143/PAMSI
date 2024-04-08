@@ -15,7 +15,7 @@ struct Packet {
 // do pakietu.
 // W sytuacji błędu zwraca wartość 1.
 
-int readPackets(const std::string &file_name, int offset, int packet_size, Packet *packets, int max_packets);
+int readPackets(const std::string &file_name, int offset, int message_size, int packet_size, Packet *packets, int max_packets);
 // Funkcja obliczająca ilość maksymalnych pakietów na podstawie
 // message_size oraz packet_size.
 // Zwraca ilość pakietów

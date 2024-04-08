@@ -1,6 +1,7 @@
 #include "PriorityQueue.h"
 
 PriorityQueue::PriorityQueue() : head(nullptr), tail(nullptr) {}
+
 bool PriorityQueue::isEmpty() {
     if (head == nullptr) {  // jeżeli kolejka jest pusta
         std::cout << "Queue is empty." << std::endl;  // wyświetla komunikat
@@ -50,6 +51,7 @@ void PriorityQueue::push(unsigned int priority, const std::string &packet) {
         newNode;              // następny node po newNode łączymy z newNode
     current->next = newNode;  // aktualny łączymy z nowym
 }
+
 void PriorityQueue::display() {
     if (isEmpty()) return;  // pusta to wychodzi
 
@@ -77,9 +79,12 @@ void PriorityQueue::pop() {
     }
     delete temp;  // Delete the original head node
 }
+
 void PriorityQueue::clear() {
     while (head != nullptr) {
         pop();
     }
-    std::cout << std::endl<<std::endl << "Priority queue has been deleted." << std::endl;
+    std::cout << std::endl
+              << std::endl
+              << "Priority queue has been deleted." << std::endl;
 }

@@ -29,6 +29,12 @@ int main(int argc, char *argv[]) {
     int message_size = std::stoi(argv[3]);
     int packet_size = std::stoi(argv[4]);
 
+    // W przypadku gdy packet_size jest większe od message_size zwracamy błąd
+    if (packet_size > message_size) {
+        std::cerr << "Error: packet_size nie może być większe od message_size";
+        return 1;
+    }
+
     std::cout << "Argumenty wywołania funkcji: " << std::endl;
     std::cout << "File name: " << file_name << std::endl;
     std::cout << "File offset: " << offset << std::endl;
@@ -37,15 +43,13 @@ int main(int argc, char *argv[]) {
 
     const int MAX_PACKETS = MaxPacketsCount(
         message_size, packet_size);  // Obliczamy liczbę pakietów
-    std::cout << "Maksymalna ilośc pakietów: "
-              << MaxPacketsCount(message_size, packet_size);
+    std::cout << "Maksymalna ilośc pakietów: "<< MaxPacketsCount(message_size, packet_size);
     Packet *packets = new Packet[MAX_PACKETS];  // alokujmey pamięc dla tablicy
-    std::cout << " | pamieć zarezerwowana dla Packet*MAX_PACKETS: "
-              << sizeof(Packet) * MAX_PACKETS << std::endl
-              << std::endl;
+    std::cout << " | pamieć zarezerwowana dla Packet*MAX_PACKETS: "<< sizeof(Packet) * MAX_PACKETS << std::endl<< std::endl;
 
     // // Przetwarzamy pakiety
-    if (readPackets(file_name, offset, packet_size, packets, MAX_PACKETS) != 0)
+    if (readPackets(file_name, offset, message_size, packet_size, packets,
+                    MAX_PACKETS) != 0)
         return 1;
     shufflePackets(packets, MAX_PACKETS);
     displayShuffledPackets(packets, MAX_PACKETS);
@@ -73,15 +77,15 @@ int inputError(int argC, char *argV[]) {
         // Sprawdzenie jakie zostały podane argumenty
         switch (i) {
             case 2:  // Offset
-                if (num < 0) {
-                    std::cerr << "Error: offset nie może być ujemny"
+                if (num < -1) {
+                    std::cerr << "Error: offset nie może być mniejszy od -1"
                               << std::endl;
                     return 1;
                 }
                 break;
             case 3:  // Message_size
                 if (num < 0) {
-                    std::cerr << "Error: message_size nie może być ujemny "
+                    std::cerr << "Error: message_size nie może być ujemny"
                               << std::endl;
                     return 1;
                 }
