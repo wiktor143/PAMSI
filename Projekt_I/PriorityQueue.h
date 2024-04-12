@@ -6,14 +6,12 @@
 struct Node {
     std::string packet;
     unsigned int priority;
-    Node *previous;
     Node *next;
 };
 
 class PriorityQueue {
    private:
     Node *head;
-    Node *tail;
 
     // Funkcja służąca do usunięcia node'a o największym(w naszym przypadku
     // pierwszego) priorytecie.
