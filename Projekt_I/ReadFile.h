@@ -1,8 +1,8 @@
 #ifndef READFILE_H
 #define READFILE_H
-
 #include <fstream>
 #include <iostream>
+
 // Struktura jednego pakietu
 struct Packet {
     // Zmienna do przechowywania pakietu
