@@ -2,69 +2,68 @@
 
 PriorityQueue::PriorityQueue() : head(nullptr) {}
 
-bool PriorityQueue::isEmpty() {
-    if (head == nullptr) {  // jeżeli kolejka jest pusta
-        std::cout << "Queue is empty." << std::endl;  // wyświetla komunikat
+bool PriorityQueue::isEmpty() const {
+    if (head == nullptr) {                            // Jeżeli kolejka jest pusta
+        std::cout << "Queue is empty." << std::endl;  // Wyświetla komunikat
         return true;
     }
     return false;
 }
 
 void PriorityQueue::push(unsigned int priority, const std::string &packet) {
-    Node *newNode = new Node;  // tworzymy nowy node
-    newNode->priority = priority;
-    newNode->packet = packet;
-    newNode->next = nullptr;
+    Node *newNode = new Node;      // Tworzymy nowy node
+    newNode->priority = priority;  // Ustawiamy priorytet
+    newNode->packet = packet;      // Przypisujemy pakiet
+    newNode->next = nullptr;       // Ustawiamy wskaźnik następny na nullptr
 
-    if (head == nullptr) {  // nie ma jeszcze nic w liście,
-        head = newNode;     // nowy node jest początkiem
+    if (head == nullptr) {  // Nie ma jeszcze nic w liście
+        head = newNode;     // Nowy node jest początkiem listy
         return;
     }
 
-    if (priority < head->priority) {  // wyższy priorytet niż początek? wstaw na początku
+    if (priority < head->priority) {  // Wyższy priorytet niż początek? Wstaw na początku
         newNode->next = head;
-        head = newNode; // Nowy początek
+        head = newNode;  // Nowy początek listy
         return;
     }
 
-    Node *current = head;  // node do przeszukania kolejki
+    Node *current = head;  // Node do przeszukania kolejki
     while (current->next != nullptr && current->next->priority < priority) {  // przechodzimy przez kolejkę
-        current = current->next;  // w poszukiwaniu odpowiedniego priorytetu
+        current = current->next;                  // w poszukiwaniu odpowiedniego priorytetu
     }
 
-    if (current->next == nullptr) {  // jeśli węzeł jest ostatni
-        current->next = newNode;     // to wstawiamy na koniec
+    if (current->next == nullptr) {  // Jeśli węzeł jest ostatni
+        current->next = newNode;     // To wstawiamy na koniec
         return;
     }
-    // jeżeli powyższy warunek nie został spełniony, w tym momencie dokonujemy
-    // podmiany
-    newNode->next = current->next;  // nowy node łączymy z następnym
-    current->next = newNode;  // aktualny łączymy z nowym
+    // Jeżeli powyższy warunek nie został spełniony, w tym momencie dokonujemy podmiany
+    newNode->next = current->next;  // Nowy node łączymy z następnym
+    current->next = newNode;        // Aktualny łączymy z nowym
 }
 
 void PriorityQueue::display() {
-    if (isEmpty()) return;  // pusta to wychodzi
+    if (isEmpty()) return;  // Kolejka jest pusta to wychodzi
 
-    Node *current = head;
-    while (current != nullptr) {
-        std::cout << current->packet;
-        current = current->next;
+    Node *current = head;             // Wskaźnik pomocniczy 
+    while (current != nullptr) {      // Przechodzimy przez całą listę
+        std::cout << current->packet; // Wyświetlamy zawartość pakietu
+        current = current->next;      // Przechodzimy do następnego node'a
     }
 }
 
 void PriorityQueue::pop() {
-    if (isEmpty()) {
+    if (isEmpty()) { // Kolejka jest pusta to wychodzi
         std::cerr << "Error: Priority queue is empty. Cannot pop." << std::endl;
         return;
     }
 
-    Node *temp = head;      // Store the current head node
-    head = head->next;      // Move head to the next node
-    delete temp;  // Delete the original head node
+    Node *temp = head;  // Przetrzymujemy wskaźnik na początek listy
+    head = head->next;  // Przesuwamy wskaźnik na następny node
+    delete temp;        // Zwalniamy pamięć dla starej głowy
 }
 
 void PriorityQueue::clear() {
-    while (head != nullptr) {
-        pop();
+    while (head != nullptr) { // Przechodzimy przez całą listę usuwając kolejne elementy
+        pop();                // Usuwamy zgodnie z malejącym priorytetem 
     }
 }
