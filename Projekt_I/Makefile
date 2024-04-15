@@ -1,12 +1,12 @@
 CFLAGS = -pedantic -Wall --std=c++17 
 
-all: driver
+all: prog
 
-driver: main.o PriorityQueue.o ReadFile.o Transfer.o
-	g++ main.o PriorityQueue.o ReadFile.o Transfer.o -o driver
+prog: driver.o PriorityQueue.o ReadFile.o Transfer.o
+	g++ driver.o PriorityQueue.o ReadFile.o Transfer.o -o prog
 
-main.o: main.cpp
-	g++ $(CFLAGS) -c main.cpp 
+driver.o: driver.cpp
+	g++ $(CFLAGS) -c driver.cpp 
 
 PriorityQueue.o: PriorityQueue.cpp PriorityQueue.h
 	g++ $(CFLAGS) -c PriorityQueue.cpp
@@ -18,4 +18,4 @@ Transfer.o: Transfer.cpp Transfer.h
 	g++ $(CFLAGS) -c Transfer.cpp
 
 clean:
-	rm *.o driver
+	rm *.o prog
