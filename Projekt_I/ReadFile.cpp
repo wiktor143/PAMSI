@@ -32,7 +32,7 @@ int readPackets(const std::string &file_name, int offset, int message_size, int 
         // Przypadek gdy użytkownik chce wylosować wartość offset
     } else if (offset == -1) {
         srand(time(NULL));
-        int temp_offset = rand() % 10000;        // Losowanie wartości offset'u
+        int temp_offset = rand() % 100000;        // Losowanie wartości offset'u
         file.seekg(temp_offset, std::ios::beg);  // Przesuwamy kursor od początku pliku o wylosowany offset
     }
 
