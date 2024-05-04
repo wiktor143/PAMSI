@@ -28,13 +28,6 @@ int main(int argc, char *argv[]) {
         sort_key_pos = std::stoi(argv[2]);
         n_items = std::stoi(argv[3]);
     }
-    // Sprawdzamy wartość klucza do sortowania, jeśli wychodzi z naszego przedziału <1;3>
-    // przerywamy działanie pod warunkiem, że jest więcej argumentów wywołania niż 1
-    if (argc != 1 && (sort_key_pos > 3 || sort_key_pos <= 0)) {
-        std::cerr << "Error: Klucz sortowania jest z przedziału <1;3>. Podany klucz: "
-                  << sort_key_pos << std::endl;
-        return 1;
-    }
     if (file_name == "-") {
         data = loadCinParameters(sort_key_pos, n_items);
     } else if (argc == 1) {
@@ -47,9 +40,20 @@ int main(int argc, char *argv[]) {
     }
 
     // Wyświetlamy wczytane dane dla testu
-    for (const auto &row : data) {
-        std::cout << "ID: " << row.id << ", Film: " << row.movie << ", Ocena: " << row.rating
-                  << std::endl;
+    // Iteracja po wektorze movies
+    std::cout << std::endl;
+    for (const auto &movie : data) {
+        // Wyświetlenie zawartości text
+        std::cout << "Text: ";
+        for (const auto &cell : movie.text) {
+            std::cout << cell << " ";
+        }
+
+        // Wyświetlenie ratingu
+        std::cout << "Rating: " << movie.rating << std::endl;
+
+        // Oddzielenie kolejnych filmów
+        std::cout << std::endl;
     }
     return 0;
 }

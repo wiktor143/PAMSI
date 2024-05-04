@@ -5,7 +5,6 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
     std::vector<Movie> data;         // Dane: liczba porządkowa, nazwa, rating
     std::string line;                // Buffer na zawartość wiersza
     int count = 0;                   // liczba wczytanych wierszy
-    int numFields = std::count(line.begin(), line.end(), '^') + 1; // Liczba pól
 
     if (!file.is_open()) {  // Sprawdzamy czy plik został otworzony poprawnie
         std::cerr << "Error: Nie można otworzyć pliku: " << input_file << std::endl;
@@ -23,25 +22,28 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
 
         // Odczytujemy wiersz
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
-        std::vector<std::string> parsedData = splitRow(line, '^');
+        // W przypadku kiedy klucz sortowania jest większy niż ilość komórek występuje błąd
+        std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
 
-        try {
-            // Numer porządkowy
-            int id = std::stoi(parsedData[0]);
-            // Nazwa filmu
-            std::string movie = parsedData[1];
-            // Rating filmu
-            // Próba zamiany strimga na floata, jeśli się nie powiedzie
-            // program pominie tą linijkę i wychwyci wyjątek
-            float rating = std::stof(parsedData[sort_key_pos - 1]);
-            data.push_back({id, movie, rating});
-            count++;
-        } catch (const std::invalid_argument &) {
-            // Nieudana konwersja, nie zwiększa nam liczby wierszy
+        // Pominięcie pustych linii bądź takich, w których nie występuje rating
+        if (!parsedData.empty()) {
+            try {
+                // Rating filmu
+                // Próba zamiany strimga na floata, jeśli się nie powiedzie
+                // program pominie tą linijkę i wychwyci wyjątek
+                float rating = std::stof(parsedData[sort_key_pos - 1]);
+                // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
+                // informację
+                data.push_back({parsedData, rating});
+                // Zwiększenie liczby poprawnie odczytanych wierszy
+                count++;
+            } catch (const std::invalid_argument &) {
+                // Nieudana konwersja, nie zwiększa nam liczby wierszy
+            }
         }
     }
 
-    // Powielanie poprawnie wczytanych już filmów
+    // Powielanie poprawnie wczytanych wcześniej filmów
     for (int i = 0; i < (n_items - count); i++) {
         data.push_back(data[i]);
     }
@@ -56,35 +58,37 @@ std::vector<Movie> loadCinParameters(int sort_key_pos, int n_items) {
     while (std::getline(std::cin, line) && count < n_items) {
         // Pobieramy każdy wiersz z pliku do momentu, kiedy count
         // będzie równy zadanej wartości argumentu wywołania, count startuje od 0 dlatego < n_items
+
         // Odczytujemy wiersz
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
-        std::vector<std::string> parsedData = splitRow(line, '^');
-        try {
-            // Numer porządkowy
-            int id = std::stoi(parsedData[0]);
+        // W przypadku kiedy klucz sortowania jest większy niż ilość komórek występuje błąd
+        std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
 
-            // Nazwa filmu
-            std::string movie = parsedData[1];
-            // Rating filmu
-            // Próba zamiany strimga na floata, jeśli się nie powiedzie
-            // program pominie tą linijkę i wychwyci wyjątek
-
-            float rating = std::stof(parsedData[sort_key_pos - 1]);
-
-            data.push_back({id, movie, rating});
-
-            count++;
-        } catch (const std::invalid_argument &) {
-            // Nieudana konwersja, nie zwiększa nam liczby wierszy
+        // Pominięcie pustych linii bądź takich, w których nie występuje rating
+        if (!parsedData.empty()) {
+            try {
+                // Rating filmu
+                // Próba zamiany strimga na floata, jeśli się nie powiedzie
+                // program pominie tą linijkę i wychwyci wyjątek
+                float rating = std::stof(parsedData[sort_key_pos - 1]);
+                // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
+                // informację
+                data.push_back({parsedData, rating});
+                // Zwiększenie liczby poprawnie odczytanych wierszy
+                count++;
+            } catch (const std::invalid_argument &) {
+                // Nieudana konwersja, nie zwiększa nam liczby wierszy
+            }
         }
     }
 
-    // Powielanie poprawnie wczytanych już filmów
+    // Powielanie poprawnie wczytanych wcześniej filmów
     for (int i = 0; i < (n_items - count); i++) {
         data.push_back(data[i]);
     }
-    return data;
+    return data;  // Zwracamy wektor
 }
+
 std::vector<Movie> loadCin() {
     std::vector<Movie> data;  // Dane: liczba porządkowa, nazwa, rating
     std::string line;         // Buffer na zawartość wiersza
@@ -92,33 +96,32 @@ std::vector<Movie> loadCin() {
 
     while (std::getline(std::cin, line)) {
         // Pobieramy każdy wiersz z pliku do momentu, kiedy count
-        // będzie równy zadanej wartości argumentu wywołania, count startuje od 0 dlatego < n_items
+        // będzie równy zadanej wartości argumentu wywołania, count startuje od 0 dlatego <
+        // n_items
         // Odczytujemy wiersz
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
-        std::vector<std::string> parsedData = splitRow(line, '^');
-        try {
-            // Numer porządkowy
-            int id = std::stoi(parsedData[0]);
-
-            // Nazwa filmu
-            std::string movie = parsedData[1];
-            // Rating filmu
-            // Próba zamiany strimga na floata, jeśli się nie powiedzie
-            // program pominie tą linijkę i wychwyci wyjątek
-
-            float rating = std::stof(parsedData[2]);
-
-            data.push_back({id, movie, rating});
-
-            count++;
-        } catch (const std::invalid_argument &) {
-            // Nieudana konwersja, nie zwiększa nam liczby wierszy
+        std::vector<std::string> parsedData = splitRow(line, '^', 3);
+        // Pominięcie pustych linii bądź takich, w których nie występuje rating
+        if (!parsedData.empty()) {
+            try {
+                // Rating filmu
+                // Próba zamiany strimga na floata, jeśli się nie powiedzie
+                // program pominie tą linijkę i wychwyci wyjątek
+                float rating = std::stof(parsedData[2]);
+                // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
+                // informację
+                data.push_back({parsedData, rating});
+                // Zwiększenie liczby poprawnie odczytanych wierszy
+                count++;
+            } catch (const std::invalid_argument &) {
+                // Nieudana konwersja, nie zwiększa nam liczby wierszy
+            }
         }
     }
     return data;
 }
 
-std::vector<std::string> splitRow(const std::string &line, char divider) {
+std::vector<std::string> splitRow(const std::string &line, char divider, int sort_key_pos) {
     // Podzielony wiersz, każda komórka to kawałek tekstu
     // oddzielonego separatorem '^'
     std::vector<std::string> separatedData;
@@ -130,12 +133,33 @@ std::vector<std::string> splitRow(const std::string &line, char divider) {
     // zamiast czytać ze standardowego wejścia czytamy ze stringa
     std::istringstream stringToRead(line);
 
-    // Podział oddczytanego wiersza na komórki
-    while (std::getline(stringToRead, buffer, divider)) {
-        // Dodanie podzielonej komórki danego wiersza
-        separatedData.push_back(buffer);
+    // Ilość separatorów, ilość komórek jest zawsze większa niż ilość '^'
+    int cellsCount = getDividerCount(line) + 1;
+
+    // Sprawdzamy czy klucz sortowania nie jest większy niż ilość dostępnych komórek
+    if (sort_key_pos > cellsCount) {
+        std::cerr << "Error: Klucz sortowania jest większy niż ilość dostępnych komórek."
+                  <<cellsCount<< std::endl;
+        return separatedData;
     }
 
+    // Pętla umożliwiająca wycięcie ratinug ze stringa
+    while (std::getline(stringToRead, buffer, divider)) {
+        // Dodanie podzielonych komórek
+        separatedData.push_back(buffer);
+    }
+    // Porównanie rozmiaru wektora z rozmiarem, który powinien być.
+    // Użyto jawnej konwersji int'a na size_type
+    if (separatedData.size() != static_cast<std::vector<int>::size_type>(cellsCount)) {
+        separatedData.clear();
+        return separatedData;
+    }
     // Zwracamy podzielony wiersz
     return separatedData;
+}
+
+int getDividerCount(const std::string &line) {
+    // Separatorów
+    int num = std::count(line.begin(), line.end(), '^');
+    return num;
 }
