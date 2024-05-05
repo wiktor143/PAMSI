@@ -136,10 +136,9 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     // Ilość separatorów, ilość komórek jest zawsze większa niż ilość '^'
     int cellsCount = getDividerCount(line) + 1;
 
-    // Sprawdzamy czy klucz sortowania nie jest większy niż ilość dostępnych komórek
+    // Sprawdzamy czy klucz sortowania nie jest większy niż ilość dostępnych komórek.
+    // Jeśli tak jest zwraca nam pusty wektor
     if (sort_key_pos > cellsCount) {
-        std::cerr << "Error: Klucz sortowania jest większy niż ilość dostępnych komórek."
-                  <<cellsCount<< std::endl;
         return separatedData;
     }
 
@@ -150,7 +149,7 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     }
     // Porównanie rozmiaru wektora z rozmiarem, który powinien być.
     // Użyto jawnej konwersji int'a na size_type
-    if (separatedData.size() != static_cast<std::vector<int>::size_type>(cellsCount)) {
+    if (separatedData.size() != static_cast<std::vector<Movie>::size_type>(cellsCount)) {
         separatedData.clear();
         return separatedData;
     }
@@ -159,7 +158,7 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
 }
 
 int getDividerCount(const std::string &line) {
-    // Separatorów
+    // Ilość separatorów w linijce
     int num = std::count(line.begin(), line.end(), '^');
     return num;
 }
