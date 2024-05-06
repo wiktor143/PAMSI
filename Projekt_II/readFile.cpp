@@ -24,13 +24,15 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
         // W przypadku kiedy klucz sortowania jest większy niż ilość komórek występuje błąd
         std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
+        // Pominięcie pustych linii bądź takich, bądź takich , w których tytył również zaczyna
+        // się od cyfry
 
-        // Pominięcie pustych linii bądź takich, w których nie występuje rating
-        if (!parsedData.empty()) {
+        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
                 // program pominie tą linijkę i wychwyci wyjątek
+
                 float rating = std::stof(parsedData[sort_key_pos - 1]);
                 // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
                 // informację
@@ -42,10 +44,12 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
             }
         }
     }
-
-    // Powielanie poprawnie wczytanych wcześniej filmów
-    for (int i = 0; i < (n_items - count); i++) {
-        data.push_back(data[i]);
+    // Powielanie poprawnie wczytanych wcześniej filmów.
+    // jeśli nie ma danych do powielenia pomijamy kopiowanie.
+    if (count != 0) {
+        for (int i = 0; i < (n_items - count); i++) {
+            data.push_back(data[i]);
+        }
     }
     return data;  // Zwracamy wektor
 }
@@ -65,7 +69,7 @@ std::vector<Movie> loadCinParameters(int sort_key_pos, int n_items) {
         std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
 
         // Pominięcie pustych linii bądź takich, w których nie występuje rating
-        if (!parsedData.empty()) {
+        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
@@ -82,14 +86,17 @@ std::vector<Movie> loadCinParameters(int sort_key_pos, int n_items) {
         }
     }
 
-    // Powielanie poprawnie wczytanych wcześniej filmów
-    for (int i = 0; i < (n_items - count); i++) {
-        data.push_back(data[i]);
+    // Powielanie poprawnie wczytanych wcześniej filmów.
+    // jeśli nie ma danych do powielenia pomijamy kopiowanie.
+    if (count != 0) {
+        for (int i = 0; i < (n_items - count); i++) {
+            data.push_back(data[i]);
+        }
     }
     return data;  // Zwracamy wektor
 }
 
-std::vector<Movie> loadCin() {
+std::vector<Movie> loadCin(int sort_key_pos) {
     std::vector<Movie> data;  // Dane: liczba porządkowa, nazwa, rating
     std::string line;         // Buffer na zawartość wiersza
     int count = 0;            // liczba wczytanych wierszy
@@ -100,9 +107,9 @@ std::vector<Movie> loadCin() {
         // n_items
         // Odczytujemy wiersz
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
-        std::vector<std::string> parsedData = splitRow(line, '^', 3);
+        std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
         // Pominięcie pustych linii bądź takich, w których nie występuje rating
-        if (!parsedData.empty()) {
+        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
@@ -145,11 +152,14 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     // Pętla umożliwiająca wycięcie ratinug ze stringa
     while (std::getline(stringToRead, buffer, divider)) {
         // Dodanie podzielonych komórek
-        separatedData.push_back(buffer);
+        if (!buffer.empty()) {
+            separatedData.push_back(buffer);
+        }
     }
     // Porównanie rozmiaru wektora z rozmiarem, który powinien być.
     // Użyto jawnej konwersji int'a na size_type
-    if (separatedData.size() != static_cast<std::vector<Movie>::size_type>(cellsCount)) {
+
+    if (cellsCount != static_cast<int>(separatedData.size())) {
         separatedData.clear();
         return separatedData;
     }
@@ -161,4 +171,33 @@ int getDividerCount(const std::string &line) {
     // Ilość separatorów w linijce
     int num = std::count(line.begin(), line.end(), '^');
     return num;
+}
+
+bool isFloat(const std::string &s) {
+    // Zmienne czy znaleziono kropke i czy jest to cyfra
+    bool decimalPointFound = false;
+    bool digitFound = false;
+
+    // Przechodzimy przez całego stringa
+    for (char c : s) {
+        // Czy jest to cyfra, jeśli tak to zmienna digitFoung jest true
+        if (std::isdigit(c)) {
+            digitFound = true;
+            // Jeśli to nie cyfra, musi być to kropka
+        } else if (c == '.') {
+            // Znaleziono już wcześniej kropkę, jeśli tak to zwróc false
+            if (decimalPointFound) {
+                // Mamy już jedną kropkę dziesiętną
+                return false;
+            }
+            // Jeśli wcześniej kropki nie było, zapisz, że kropka została znaleziona
+            decimalPointFound = true;
+        } else {
+            // Znaleziono znak niebędący cyfrą ani kropką
+            return false;
+        }
+    }
+
+    // Musimy mieć co najmniej jedną cyfrę i nie więcej niż jedną kropkę
+    return digitFound && decimalPointFound;
 }
