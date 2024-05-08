@@ -27,6 +27,6 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
 // Funkcja zwraca nam ilość separatrów '^' w pliku, aby potem obliczyć ilość komórek w linijce
 int getDividerCount(const std::string &line);
 
-// Funkcja sprawdzająca czy odczytana liczba jest typu float
-bool isFloat(const std::string &s);
+// Funkcja sprawdzająca czy odczytany string jest liczbą
+bool isNumber(const std::string &s);
 #endif

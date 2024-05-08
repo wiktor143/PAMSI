@@ -23,20 +23,22 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
         // Odczytujemy wiersz
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
         // W przypadku kiedy klucz sortowania jest większy niż ilość komórek występuje błąd
+
         std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
         // Pominięcie pustych linii bądź takich, bądź takich , w których tytył również zaczyna
-        // się od cyfry
-
-        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
+        // się od cyfry. Ważne aby sprawdzić rozmiar wektora, aby isFloat nie odwołał się do
+        // nie istniejącego indeksu
+        if (!parsedData.empty() && parsedData.size() == 2 && isNumber(parsedData[1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
                 // program pominie tą linijkę i wychwyci wyjątek
 
-                float rating = std::stof(parsedData[sort_key_pos - 1]);
+                float rating = std::stof(parsedData[1]);
                 // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
                 // informację
                 data.push_back({parsedData, rating});
+                
                 // Zwiększenie liczby poprawnie odczytanych wierszy
                 count++;
             } catch (const std::invalid_argument &) {
@@ -44,6 +46,7 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
             }
         }
     }
+     
     // Powielanie poprawnie wczytanych wcześniej filmów.
     // jeśli nie ma danych do powielenia pomijamy kopiowanie.
     if (count != 0) {
@@ -51,6 +54,7 @@ std::vector<Movie> loadCSV(std::string &input_file, int sort_key_pos, int n_item
             data.push_back(data[i]);
         }
     }
+
     return data;  // Zwracamy wektor
 }
 
@@ -69,12 +73,12 @@ std::vector<Movie> loadCinParameters(int sort_key_pos, int n_items) {
         std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
 
         // Pominięcie pustych linii bądź takich, w których nie występuje rating
-        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
+        if (!parsedData.empty() && parsedData.size() == 2 && isNumber(parsedData[1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
                 // program pominie tą linijkę i wychwyci wyjątek
-                float rating = std::stof(parsedData[sort_key_pos - 1]);
+                float rating = std::stof(parsedData[1]);
                 // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
                 // informację
                 data.push_back({parsedData, rating});
@@ -93,6 +97,8 @@ std::vector<Movie> loadCinParameters(int sort_key_pos, int n_items) {
             data.push_back(data[i]);
         }
     }
+   
+
     return data;  // Zwracamy wektor
 }
 
@@ -109,12 +115,12 @@ std::vector<Movie> loadCin(int sort_key_pos) {
         // Podział całego wiersza na pojedyńcze komórki według zadanego separatora
         std::vector<std::string> parsedData = splitRow(line, '^', sort_key_pos);
         // Pominięcie pustych linii bądź takich, w których nie występuje rating
-        if (!parsedData.empty() && isFloat(parsedData[sort_key_pos - 1])) {
+        if (!parsedData.empty() && parsedData.size() == 2 && isNumber(parsedData[1])) {
             try {
                 // Rating filmu
                 // Próba zamiany strimga na floata, jeśli się nie powiedzie
                 // program pominie tą linijkę i wychwyci wyjątek
-                float rating = std::stof(parsedData[2]);
+                float rating = std::stof(parsedData[1]);
                 // Dodanie całej poziomej linii oraz ratingu do wektora przechowywującego
                 // informację
                 data.push_back({parsedData, rating});
@@ -134,7 +140,8 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     std::vector<std::string> separatedData;
 
     // Buffer na wycinek tekstu
-    std::string buffer;
+    std::string allText;
+    std::string rating;
 
     // Strumień o typie stringa, podobne do std::cin, ale
     // zamiast czytać ze standardowego wejścia czytamy ze stringa
@@ -143,6 +150,18 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     // Ilość separatorów, ilość komórek jest zawsze większa niż ilość '^'
     int cellsCount = getDividerCount(line) + 1;
 
+    // Licznik separatorów
+    int dividerCounter = 0;
+
+    // Czytamy całą zawartość wiersza
+    std::getline(stringToRead, allText);
+    // Dodajemy do wektora na pierwsze miejsce
+
+    separatedData.push_back(allText);
+
+    // Przesuwamy wskaźnik na początek strumienia, aby w dalszej kolejności odczytać rating
+    stringToRead.seekg(0);
+
     // Sprawdzamy czy klucz sortowania nie jest większy niż ilość dostępnych komórek.
     // Jeśli tak jest zwraca nam pusty wektor
     if (sort_key_pos > cellsCount) {
@@ -150,16 +169,19 @@ std::vector<std::string> splitRow(const std::string &line, char divider, int sor
     }
 
     // Pętla umożliwiająca wycięcie ratinug ze stringa
-    while (std::getline(stringToRead, buffer, divider)) {
+    while (std::getline(stringToRead, rating, divider)) {
         // Dodanie podzielonych komórek
-        if (!buffer.empty()) {
-            separatedData.push_back(buffer);
+        // dodać opcję ze zostaną daszki nie dzieli stringa
+        if (dividerCounter == sort_key_pos - 1) {
+            separatedData.push_back(rating);
         }
+        dividerCounter++;
     }
     // Porównanie rozmiaru wektora z rozmiarem, który powinien być.
+    // Wartość dwa, ponieważ poprawny wektora powinien mieć pod indeksem nr 0
+    // całą zawartość wiersza natomiast pod indeksem 1 sam rating
     // Użyto jawnej konwersji int'a na size_type
-
-    if (cellsCount != static_cast<int>(separatedData.size())) {
+    if (static_cast<int>(separatedData.size()) != 2) {
         separatedData.clear();
         return separatedData;
     }
@@ -173,7 +195,7 @@ int getDividerCount(const std::string &line) {
     return num;
 }
 
-bool isFloat(const std::string &s) {
+bool isNumber(const std::string &s) {
     // Zmienne czy znaleziono kropke i czy jest to cyfra
     bool decimalPointFound = false;
     bool digitFound = false;
@@ -199,5 +221,5 @@ bool isFloat(const std::string &s) {
     }
 
     // Musimy mieć co najmniej jedną cyfrę i nie więcej niż jedną kropkę
-    return digitFound && decimalPointFound;
+    return (digitFound && decimalPointFound) ||  (digitFound && !decimalPointFound);
 }
