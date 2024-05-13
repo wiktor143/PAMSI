@@ -49,8 +49,7 @@ void merge(std::vector<Movie> &data, int leftIndex, int middleIndex, int rightIn
         // Jeśli indeks lewej podtablicy nie przekroczył długości i indeks prawej podtablicy jest
         // większy niż długość przypisz element z lewej pod tablicy do złączonej. Albo rating lewej
         // i prawej są porównywane i wartość lewej jest mniejsza przypisz wartość lewej
-        if ((i < subLeftLength) &&
-            (j >= subRightLength || tempLeft[i].rating <= tempRight[j].rating)) {
+        if ((i < subLeftLength) && (j >= subRightLength || tempLeft[i].rating <= tempRight[j].rating)) {
             data[k] = tempLeft[i];
             i++;
             // Jeśli powyższy warunek nie zostanie spełniony, przypisz wartość prawej pod tablicy do
