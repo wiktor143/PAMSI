@@ -5,9 +5,6 @@ all: prog
 prog: main.o readFile.o mergeSort.o quickSort.o bucketSort.o functions.o
 	g++ main.o readFile.o mergeSort.o  quickSort.o bucketSort.o functions.o -o prog
 
-main.o: main.cpp
-	g++ $(CFLAGS) -c main.cpp 
-
 readFile.o: readFile.cpp
 	g++ $(CFLAGS) -c readFile.cpp
 
