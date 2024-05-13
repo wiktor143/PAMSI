@@ -2,9 +2,15 @@
 #define BUCKET_SORT
 
 #include"readFile.h"
+
+// Funkcja sortująca dane wejściowe w sposób kubełkowy(bucket sort).
 void bucketSort(std::vector<Movie>& data, int length);
-int findBucketIndex(float rating, int num_buckets);
+
+// Funckja, która jest odpowiedzialna za posortowanie wartości w kubełku.
 void sortBucket(std::vector<Movie>& bucket);
-int getBucketIndex(float rating, float maxRating);
+
+// Funkcja, której zadaniem jest zwrócenie największej wartość ratingu, znalezionego 
+// wśród filmów.
 float findMaxRating(const std::vector<Movie>& data);
+
 #endif

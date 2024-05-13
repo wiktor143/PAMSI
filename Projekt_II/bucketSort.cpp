@@ -1,6 +1,5 @@
 #include "bucketSort.h"
 
-// Funkcja wstawiająca element do posortowanej listy
 void sortBucket(std::vector<Movie>& bucket) {
     int length = static_cast<int>(bucket.size());
     // Start pętli od drugiego elementu, ponieważ pierwszy traktujemy jako już posortowany
@@ -24,11 +23,11 @@ void sortBucket(std::vector<Movie>& bucket) {
     }
 }
 
-// Sortowanie kubełkowe (Bucket Sort) dla struktury Movie
 void bucketSort(std::vector<Movie>& data, int length) {
-    int num_buckets = findMaxRating(data) + 1;  // Liczba kubełków odpowiada liczbie możliwych ocen [0 do maxRating]
+    // Liczba kubełków odpowiada liczbie możliwych ocen [0 do maxRating]
+    int num_buckets = findMaxRating(data) + 1;
 
-    // Stworzenie wektora kubełków 
+    // Stworzenie wektora kubełków
     std::vector<std::vector<Movie>> buckets(num_buckets);
 
     // Wstawianie filmów do odpowiednich kubełków, dla wartości int na tym etapie
@@ -38,14 +37,14 @@ void bucketSort(std::vector<Movie>& data, int length) {
     }
 
     // Sortuj filmy wewnątrz każdego kubełka (sortowanie przez wstawianie), jeżeli będziemy mięc
-    //  do czynienia z ratingiem typu float np. 1.1. Dla wartości int takich jak w pliku "dane.csv"
+    // do czynienia z ratingiem typu float np. 1.1. Dla wartości int takich jak w pliku "dane.csv"
     // sortowanie przez wstawianie się nie odbędzie(dane już są posortowane).
     int index = 0;
     for (int i = 0; i < static_cast<int>(buckets.size()); ++i) {
         sortBucket(buckets[i]);
         for (int j = 0; j < static_cast<int>(buckets[i].size()); ++j) {
             // Przepisanie posortowanych wartości do oryginalnego wektora
-            data[index++] = buckets[i][j]; 
+            data[index++] = buckets[i][j];
         }
     }
 }
