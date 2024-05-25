@@ -1,6 +1,11 @@
-#include<iostream>
+#include <iostream>
+#include"checkersBoard.h"
+#include "gameController.h"
 
-int main(){
-    std::cout<<"Hello world"<<std::endl;
+int main() {
+    CheckersBoard board;
+    gameController ctrl(board);
+
+    ctrl.game();
     return 0;
 }
