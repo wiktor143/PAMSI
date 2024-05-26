@@ -1,5 +1,6 @@
 #include <iostream>
-#include"checkersBoard.h"
+
+#include "checkersBoard.h"
 #include "gameController.h"
 
 int main() {

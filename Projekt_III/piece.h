@@ -9,8 +9,6 @@ enum PieceType { MAN, KING, NONE };
 // Kolor pionka: czarny (BLACK), biały (WHITE), brak koloru (NO_COLOR).
 enum PieceColor { BLACK, WHITE, NO_COLOR };
 
-// Status pionka: aktywny (ACTIVE), zbity (BEATEN), nieaktywny (DISACTIVE).
-enum PieceStatus { ACTIVE, BEATEN, DISACTIVE };
 
 // Klasa reprezentująca pionek
 class Piece {
@@ -21,16 +19,13 @@ class Piece {
     // Kolor pionka
     PieceColor color;
 
-    // Status pionka
-    PieceStatus status;
-
    public:
 
     // Konstruktor domyślny inicjalizujący pionek jako brak pionka.
     Piece();
 
-    // Konstruktor inicjalizujący pionek z określonym typem, kolorem i statusem.
-    Piece(PieceType t, PieceColor c, PieceStatus s);
+    // Konstruktor inicjalizujący pionek z określonym typem i kolorem.
+    Piece(PieceType t, PieceColor c);
 
     // Metoda zwracająca typ pionka.
     PieceType getType() const;
@@ -38,13 +33,12 @@ class Piece {
     // Metoda zwracająca kolor pionka.
     PieceColor getColor() const;
 
-    // Metoda zwracająca status pionka.
-    PieceStatus getStatus() const;
-
     // Metoda zwracająca symbol reprezentujący pionek.
     // white: man - w, king - W
     // black: man - b, king - B 
     char getSymbol() const;
+
+    void clearSquare();
 };
 
 #endif

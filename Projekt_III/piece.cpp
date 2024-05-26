@@ -1,14 +1,12 @@
 #include "piece.h"
 
 Piece::Piece()
-    : type(PieceType::NONE), color(PieceColor::NO_COLOR), status(PieceStatus::DISACTIVE) {}
-Piece::Piece(PieceType t, PieceColor c, PieceStatus s) : type(t), color(c), status(s) {}
+    : type(PieceType::NONE), color(PieceColor::NO_COLOR){}
+Piece::Piece(PieceType t, PieceColor c) : type(t), color(c){}
 
 PieceType Piece::getType() const { return type; }
 
 PieceColor Piece::getColor() const { return color; }
-
-PieceStatus Piece::getStatus() const { return status; }
 
 char Piece::getSymbol() const {
     if (color == BLACK) {
@@ -18,4 +16,9 @@ char Piece::getSymbol() const {
     }
     // Inaczej nic 
     return ' ';
+}
+
+void Piece::clearSquare() {
+    type = NONE;
+    color = NO_COLOR;
 }
