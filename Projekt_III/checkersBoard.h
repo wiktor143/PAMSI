@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 
-#include "piece.h"
+#include "field.h"
 
 class CheckersBoard {
    public:
@@ -18,14 +18,16 @@ class CheckersBoard {
 
     void movePiece(int fromRow, int fromCol, int toRow, int toCol);
 
-    void clearSquare(int row, int col);
+    bool isCorrectMove(int fromRow, int fromCol, int toRow, int toCol, PieceColor playerColor);
+
+    FieldType getFieldType(int row, int col) const;
 
    private:
     // Dwuwymiarowa tablica 8x8 przechowująca obiekty klasy Piece, reprezentująca planszę do gry.
-    Piece board[8][8];
+    Field board[8][8];
 
     // Metoda ustawiająca pionki na planszy w początkowych pozycjach.
     void initializeBoard();
-
+    
 };
 #endif

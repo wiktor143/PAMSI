@@ -1,44 +1,44 @@
-#ifndef PIECE_H
-#define PIECE_H
+#ifndef FIELD_H
+#define FIELD_H
 
 #include <iostream>
 
-// Rodzaj pionka: zwykły (MAN), król (KING), brak pionka (NONE).
-enum PieceType { MAN, KING, NONE };
+// Rodzaj pola: zwykły (MAN), król (KING), brak pionka (NONE).
+enum FieldType { MAN, KING, NONE };
 
 // Kolor pionka: czarny (BLACK), biały (WHITE), brak koloru (NO_COLOR).
 enum PieceColor { BLACK, WHITE, NO_COLOR };
 
-
 // Klasa reprezentująca pionek
-class Piece {
+class Field {
    private:
-    // Rodzaj pionka
-    PieceType type;
+    // Rodzaj pola
+    FieldType type;
 
     // Kolor pionka
     PieceColor color;
 
    public:
-
     // Konstruktor domyślny inicjalizujący pionek jako brak pionka.
-    Piece();
+    Field();
 
     // Konstruktor inicjalizujący pionek z określonym typem i kolorem.
-    Piece(PieceType t, PieceColor c);
+    Field(FieldType t, PieceColor c);
 
-    // Metoda zwracająca typ pionka.
-    PieceType getType() const;
+    // Metoda zwracająca typ pola.
+    FieldType getType() const;
 
     // Metoda zwracająca kolor pionka.
     PieceColor getColor() const;
 
     // Metoda zwracająca symbol reprezentujący pionek.
     // white: man - w, king - W
-    // black: man - b, king - B 
+    // black: man - b, king - B
     char getSymbol() const;
 
     void clearSquare();
+
+    void promotePiece();
 };
 
 #endif
