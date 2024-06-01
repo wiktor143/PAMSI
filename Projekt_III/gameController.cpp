@@ -1,9 +1,11 @@
 #include "gameController.h"
 
 gameController::gameController(CheckersBoard& b, Player& p1, Player& p2)
-    : board(b), player1(p1), player2(p2), movesWithoutCapture(0) {
+    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(12), whitePieces(12) {
     // Rozpoczęcie gry
     status = RUNNING;
+    // Oznacza pierwszy ruch
+    firstRun = true;
     // Jeśli pierwszy jest czarny to pierwszy, jeśli nie to drugi zaczyna
     currentPlayer = (player1.getPlayerColor() == BLACK) ? &player1 : &player2;
 }
@@ -27,6 +29,7 @@ void gameController::convertMove(int playerMove, int& row, int& col) {
     col = ((playerMove - 1) % 4) * 2 + ((row % 2 == 0) ? 1 : 0);
 }
 
+int gameController::convertToMoveIndex(int row, int col) const { return row * 4 + col / 2 + 1; }
 bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
     // Strumień o typie stringa, podobne do std::cin, ale
     // zamiast czytać ze standardowego wejścia czytamy ze stringa
@@ -55,76 +58,162 @@ bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
 void gameController::switchPlayer() {
     currentPlayer = (currentPlayer == &player1) ? &player2 : &player1;
 }
+void gameController::updateGame() {}
+void gameController::makeAiMove() {
+    // Odebranie ruchu funkcji heurystycznej
+    Move aiMove = currentPlayer->getAiMove();
+    // Przypisanie ruchów pod odpwiednie indeksy
+    int fromRow = aiMove.fromRow;
+    int fromCol = aiMove.fromCol;
+    int toRow = aiMove.toRow;
+    int toCol = aiMove.toCol;
+    // Zmienna potrzeba w przypadku promocji piona przy naliczaniu ilości ruchów bez
+    // bicia;
+    bool wantsPromotion = board.getFieldType(fromRow, fromCol) == MAN;
+    // Ruch pionka, jeśli nie można zmienić pozycji pionka jest false
+    if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+        status = WRONG_MOVE;
+    }
+    std::cout << "ruch z :" << fromRow << ", " << fromCol << std::endl;
+    std::cout << "ruch do :" << toRow << ", " << toCol << std::endl;
+    std::cout << std::endl
+              << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
+              << convertToMoveIndex(toRow, toCol) << "." << std::endl
+              << std::endl;
+
+    // Akutalizacja ilości pionków na planszy
+    bool isCapture = std::abs(toRow - fromRow) == 2;
+
+    if (isCapture) {  // Jest bicie
+        // Ustalenie jakiego koloru gracz teraz jest
+        std::cout << "Zawodnik(komputer): "
+                  << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny" : "biały")
+                  << " przeprowadził bicie" << std::endl;
+
+        PieceColor opponentColor = (currentPlayer->getPlayerColor() == BLACK) ? WHITE : BLACK;
+        if (opponentColor == WHITE) {  // Jeśli jest czarny
+            whitePieces--;             // Zmniejszamy ilość jego pionków
+        } else {
+            blackPieces--;
+        }
+    }
+    // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek(bo muszą być
+    // kolejne)
+    if (isCapture || board.getFieldType(toRow, toCol) == MAN) {
+        movesWithoutCapture = 0;  // Licznik na zero jeśli było bicie
+        // Jeśli ruszyła się damka i nie było bicia oraz pionek dopiero nie wszedł
+        // na pole promowane
+    } else if (board.getFieldType(toRow, toCol) == KING && !wantsPromotion) {
+        movesWithoutCapture++;  // Zwiększenie ilości ruchów bez bicia
+        if (movesWithoutCapture == 20) {
+            status = DRAFT;
+        }
+    }
+    // Aktulizacja statusu gry, sprawdzenie czy ktoś wygrał po każdym ruchu
+    isGameOver();
+    // Aktualizacja gracza
+}
 gameStatus gameController::getGameStatus() const { return status; }
 
-void gameController::game() {
-    while (getGameStatus() == RUNNING) {
-        board.printBoard();
-        std::cout << "Tura gracza: "
-                  << (currentPlayer->getPlayerColor() == BLACK ? "czarnego" : "białego")
-                  << std::endl;
-        std::cout << "Podaj ruch lub 'q' aby zakończyć: ";
-        std::string move;
-        std::vector<int> positions;
-        std::cin >> move;
-        std::cout << std::endl;
+void gameController::isGameOver() {
+    if (blackPieces == 0) {
+        status = WIN_WHITE;
+    }
+    if (whitePieces == 0) {
+        status = WIN_BLACK;
+    }
+}
 
-        if (move == "q") {
-            status = QUITED;
+void gameController::game() {
+    std::cout << "Komputer gra kolorem: "
+              << (player1.getPlayerColor() == BLACK ? "czarnym" : "białym") << std::endl;
+    std::cout << "Człowiek gra kolorem: "
+              << (player2.getPlayerColor() == BLACK ? "czarnym" : "białym") << std::endl;
+    while (getGameStatus() == RUNNING) {
+        if (currentPlayer->getPlayerType() == AI) {
+            makeAiMove();
+            switchPlayer();
         }
 
-        // running bo może być już quit
-        if (parseMove(move, positions) && getGameStatus() == RUNNING) {
-            // Pętla w przypadku, kiedy mamy przesinięcie pionka o więcej niż jedno pole np.12x16x19
-            for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
-                // Pozycja początkowa
-                int from = positions[i];
-                // Pozycja docelowa
-                int to = positions[i + 1];
-                // Indeksy pozycji po konwersji z formatu np. 1x5
-                int fromRow, fromCol, toRow, toCol;
+        // Plansza nie zostanie wyświetlona jeśli jest pierwszy ruch i wykonuje go AI i ai nie
+        // zrobiło błedu
+        if ((!firstRun || currentPlayer->getPlayerType() != AI) && getGameStatus() == RUNNING) {
+            board.printBoard();
+        }
 
-                // Konwersja koordynatupoczątkowego na indeksy tablicy
-                convertMove(from, fromRow, fromCol);
-                // Konwersja koordynatu docelowego na indeksy tablicy
-                convertMove(to, toRow, toCol);
+        if (currentPlayer->getPlayerType() == HUMAN && getGameStatus() == RUNNING) {
+            std::string move;
+            std::vector<int> positions;
+            std::cout << "Tura człowieka, ruch: "
+                      << (currentPlayer->getPlayerColor() == BLACK ? "czarnych." : "białych.")
+                      << std::endl;
+            std::cout << "Na planszy jest: " << blackPieces << "-czarnych, " << whitePieces
+                      << "-białych." << std::endl;
+            std::cout << "Ilość ruchów samymi damkami: " << movesWithoutCapture << std::endl;
+            std::cout << "Podaj ruch lub 'q' aby zakończyć: ";
+            std::cin >> move;
 
-                bool isCapture = std::abs(toRow - fromRow) == 2;
+            if (move == "q") {
+                status = QUITED;
+            }
+            if (parseMove(move, positions) && getGameStatus() == RUNNING) {
+                for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
+                    int from = positions[i];
+                    int to = positions[i + 1];
+                    // Indeksy pozycji po konwersji z formatu np. 1x5
+                    int fromRow, fromCol, toRow, toCol;
+                    convertMove(from, fromRow, fromCol);
+                    convertMove(to, toRow, toCol);
+                    bool wantsPromotion = board.getFieldType(fromRow, fromCol) == MAN;
+                    if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+                        status = WRONG_MOVE;
+                        break;
+                    }
+                    bool isCapture = std::abs(toRow - fromRow) == 2;
+                    if (isCapture) {
+                        std::cout << "Zawodnik(człowiek): "
+                                  << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny"
+                                                                                 : "biały")
+                                  << " przeprowadził bicie!" << std::endl;
 
-                // Zmienna potrzeba w przypadku promocji piona przy naliczaniu ilości ruchów bez
-                // bicia;
-                bool wantsPromotion = board.getFieldType(fromRow, fromCol) == MAN;
-                // Przesunięcie pionka, jeśli nie można przesunąc jest false
-                if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
-                    status = WRONG_MOVE;
-                    break;
-                }
-                // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek(bo muszą być kolejne)
-                if (isCapture || board.getFieldType(toRow, toCol) == MAN) {
-                    movesWithoutCapture = 0;  // Licznik na zero jeśli było bicie
-                    // Jeśli ruszyła się damka i nie było bicia oraz pionek dopiero nie wszedł na
-                    // pole promowane
-                } else if (board.getFieldType(toRow, toCol) == KING && !wantsPromotion) {
-                    movesWithoutCapture++;  // Zwiększenie ilości ruchów bez bicia
-                    if (movesWithoutCapture == 20) {
-                        status = DRAFT;
+                        PieceColor opponentColor =
+                            (currentPlayer->getPlayerColor() == BLACK) ? WHITE : BLACK;
+                        if (opponentColor == WHITE) {
+                            whitePieces--;
+                        } else {
+                            blackPieces--;
+                        }
+                    }
+                    if (isCapture || board.getFieldType(toRow, toCol) == MAN) {
+                        movesWithoutCapture = 0;
+                    } else if (board.getFieldType(toRow, toCol) == KING && !wantsPromotion) {
+                        movesWithoutCapture++;
+                        if (movesWithoutCapture == 20) {
+                            status = DRAFT;
+                        }
                     }
                 }
+                switchPlayer();
+                isGameOver();
+            } else {
+                status = WRONG_MOVE;
             }
-            // Aktualizacja gracza
-            switchPlayer();
-            // Jeśli użytkownik podał zły format ruchu np. 2s3
-        } else {
-            status = WRONG_MOVE;
         }
+
+        // Skończył się pierwszy ruch
+        firstRun = false;
 
         // Warunki sprawdzające stan gry
         if (getGameStatus() == WRONG_MOVE) {
-            std::cerr << "Error: Nieprawidłowy format ruchu!" << std::endl;
+            std::cerr << "Error: Nieprawidłowy ruch!" << std::endl;
         } else if (getGameStatus() == QUITED) {
-            std::cerr << "Zakończono gre!" << std::endl;
+            std::cerr << "Zakończono grę!" << std::endl;
         } else if (getGameStatus() == DRAFT) {
             std::cerr << "Koniec gry: remis!" << std::endl;
+        } else if (getGameStatus() == WIN_BLACK) {
+            std::cerr << "Czarny wygrał!" << std::endl;
+        } else if (getGameStatus() == WIN_WHITE) {
+            std::cerr << "Biały wygrał!" << std::endl;
         }
     }
 }

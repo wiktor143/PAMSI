@@ -7,7 +7,22 @@
 
 #include "field.h"
 
+// Struktura przechowywująca potencjalne pola dla funkcji heurystycznej
+struct Move {
+    int fromRow;
+    int fromCol;
+    int toRow;
+    int toCol;
+};
+
 class CheckersBoard {
+   private:
+    // Dwuwymiarowa tablica 8x8 przechowująca obiekty klasy Piece, reprezentująca planszę do gry.
+    Field board[8][8];
+
+    // Metoda ustawiająca pionki na planszy w początkowych pozycjach.
+    void initializeBoard();
+
    public:
     // Konstruktor domyślny, który wywołuje metodę initializeBoard w celu ustawienia początkowego
     // stanu planszy.
@@ -22,12 +37,8 @@ class CheckersBoard {
 
     FieldType getFieldType(int row, int col) const;
 
-   private:
-    // Dwuwymiarowa tablica 8x8 przechowująca obiekty klasy Piece, reprezentująca planszę do gry.
-    Field board[8][8];
+    std::vector<Move> getAllPossibleMoves(PieceColor playerColor);
 
-    // Metoda ustawiająca pionki na planszy w początkowych pozycjach.
-    void initializeBoard();
-    
+    int evaluateBoard(PieceColor playerColor) const;  // Funkcja oceny stanu planszy
 };
 #endif
