@@ -151,8 +151,9 @@ bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol
             return false;
         }
     }
-    
+     
     // Sprawdzenie logiki ruchu damki (KING)
+    
     if (board[fromRow][fromCol].getType() == KING) {
         // Damka może się poruszać o jeden w dowolnym kierunku
         if (abs(rowDiff) == 1 && abs(colDiff) == 1) {
