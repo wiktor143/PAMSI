@@ -75,6 +75,7 @@ void CheckersBoard::initializeBoard() {
     board[1][2] = Field(MAN, WHITE);
     board[3][4] = Field(MAN, WHITE);
     // board[5][6] = Field(MAN, WHITE);
+
 }
 
 bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol,
@@ -150,7 +151,7 @@ bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol
             return false;
         }
     }
-
+    
     // Sprawdzenie logiki ruchu damki (KING)
     if (board[fromRow][fromCol].getType() == KING) {
         // Damka może się poruszać o jeden w dowolnym kierunku
@@ -206,7 +207,7 @@ std::vector<Move> CheckersBoard::getAllPossibleMoves(PieceColor playerColor) {
                         moves.push_back({row, col, newRow, newCol});
                     }
                 }
-
+                
                 // Sprawdzamy wszystkie możliwe przesunięcia o dwa pola na ukos (bicie)
                 for (int i = 0; i < 4; ++i) {
                     // Nowe współrzędne po przesunięciu
