@@ -1,7 +1,7 @@
 #include "gameController.h"
 
 gameController::gameController(CheckersBoard& b, Player& p1, Player& p2)
-    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(12), whitePieces(12) {
+    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(1), whitePieces(2) {
     // Rozpoczęcie gry
     status = RUNNING;
     // Oznacza pierwszy ruch
@@ -36,7 +36,9 @@ bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
     std::istringstream stringToRead(move);
     // Buffer na pozycje na planszy
     std::string positionBuffer;
-    while (std::getline(stringToRead, positionBuffer, 'x')) {
+
+    char delimiter = move.find('x') != std::string::npos ? 'x' : '-';
+    while (std::getline(stringToRead, positionBuffer, delimiter)) {
         try {
             // Sprawdzenie, czy buffer zawiera tylko cyfry
             for (char c : positionBuffer) {
@@ -52,13 +54,43 @@ bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
             return false;
         }
     }
+
+    // Dodatkowe sprawdzenie czy ruch jest poprawnie wykonany
+    for (int i = 0; i < static_cast<int>(positions.size()) - 1; ++i) {
+        int prev = positions[i];
+        int curr = positions[i + 1];
+        int diff = std::abs(prev - curr);
+        // Jeśli jest zwykłe przsunięcie i rozmiar nie wynosi 2 lub przesunięcie jest więcej niż o
+        // 4,5 lub 3 zwróć false
+        if (delimiter == '-' &&
+            (static_cast<int>(positions.size() != 2 || (diff != 4 && diff != 5 && diff != 3)))) {
+            return false;
+        }
+        // Dla bicia różnica wynosi 7 lub 9
+        if (delimiter == 'x' && (diff != 7 && diff != 9)) {
+            return false;
+        }
+    }
     return true;
 }
 
 void gameController::switchPlayer() {
     currentPlayer = (currentPlayer == &player1) ? &player2 : &player1;
 }
-void gameController::updateGame() {}
+void gameController::updateGameStatus() {
+    // Warunki sprawdzające stan gry
+    if (getGameStatus() == WRONG_MOVE) {
+        std::cerr << "Error: Nieprawidłowy ruch!" << std::endl;
+    } else if (getGameStatus() == QUITED) {
+        std::cerr << "Zakończono grę!" << std::endl;
+    } else if (getGameStatus() == DRAFT) {
+        std::cerr << "Koniec gry: remis!" << std::endl;
+    } else if (getGameStatus() == WIN_BLACK) {
+        std::cerr << "Czarny wygrał!" << std::endl;
+    } else if (getGameStatus() == WIN_WHITE) {
+        std::cerr << "Biały wygrał!" << std::endl;
+    }
+}
 void gameController::makeAiMove() {
     // Odebranie ruchu funkcji heurystycznej
     Move aiMove = currentPlayer->getAiMove();
@@ -115,13 +147,16 @@ void gameController::makeAiMove() {
 }
 gameStatus gameController::getGameStatus() const { return status; }
 
-void gameController::isGameOver() {
+bool gameController::isGameOver() {
     if (blackPieces == 0) {
         status = WIN_WHITE;
+        return true;
     }
     if (whitePieces == 0) {
         status = WIN_BLACK;
+        return true;
     }
+    return false;
 }
 
 void gameController::game() {
@@ -192,9 +227,9 @@ void gameController::game() {
                             status = DRAFT;
                         }
                     }
+                    if (isGameOver()) break;  // Sprawdzenie po każdym ruchu czy jest koniec gry
                 }
-                switchPlayer();
-                isGameOver();
+                switchPlayer();  // Koniec ruchów człowieka(wielokrotne bicie) zmien gracza
             } else {
                 status = WRONG_MOVE;
             }
@@ -202,18 +237,6 @@ void gameController::game() {
 
         // Skończył się pierwszy ruch
         firstRun = false;
-
-        // Warunki sprawdzające stan gry
-        if (getGameStatus() == WRONG_MOVE) {
-            std::cerr << "Error: Nieprawidłowy ruch!" << std::endl;
-        } else if (getGameStatus() == QUITED) {
-            std::cerr << "Zakończono grę!" << std::endl;
-        } else if (getGameStatus() == DRAFT) {
-            std::cerr << "Koniec gry: remis!" << std::endl;
-        } else if (getGameStatus() == WIN_BLACK) {
-            std::cerr << "Czarny wygrał!" << std::endl;
-        } else if (getGameStatus() == WIN_WHITE) {
-            std::cerr << "Biały wygrał!" << std::endl;
-        }
+        updateGameStatus();
     }
 }

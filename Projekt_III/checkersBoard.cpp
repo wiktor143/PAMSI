@@ -52,25 +52,30 @@ void CheckersBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 void CheckersBoard::initializeBoard() {
-    for (int row = 0; row < 8; ++row) {
-        for (int col = 0; col < 8; ++col) {
-            // Inicjalizacja czarnych pól
-            if ((row < 3) && ((row + col) % 2 == 1)) {
-                // Umieszczanie czarnych pionków w pierwszych trzech wierszach na czarnych polach
-                board[row][col] = Field(MAN, BLACK);
-                // Inicjalizacja białych
-            } else if ((row > 4) && ((row + col) % 2 == 1)) {
-                // Umieszczanie białych pionków w ostatnich trzech wierszach na czarnych polach
-                board[row][col] = Field(MAN, WHITE);
-            } else {
-                // Pozostałe pola są puste
-                board[row][col] = Field();
-            }
-        }
-    }
+    // for (int row = 0; row < 8; ++row) {
+    //     for (int col = 0; col < 8; ++col) {
+    //         // Inicjalizacja czarnych pól
+    //         if ((row < 3) && ((row + col) % 2 == 1)) {
+    //             // Umieszczanie czarnych pionków w pierwszych trzech wierszach na czarnych polach
+    //             board[row][col] = Field(MAN, BLACK);
+    //             // Inicjalizacja białych
+    //         } else if ((row > 4) && ((row + col) % 2 == 1)) {
+    //             // Umieszczanie białych pionków w ostatnich trzech wierszach na czarnych polach
+    //             board[row][col] = Field(MAN, WHITE);
+    //         } else {
+    //             // Pozostałe pola są puste
+    //             board[row][col] = Field();
+    //         }
+    //     }
+    // }
     // board[6][1] = Field(MAN, BLACK);
     // board[6][3] = Field(MAN, BLACK);
     // board[1][2] = Field(MAN, WHITE);
+    board[0][1] = Field(MAN, BLACK);
+    board[1][2] = Field(MAN, WHITE);
+    board[3][4] = Field(MAN, WHITE);
+    // board[5][6] = Field(MAN, WHITE);
+
 }
 
 bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol,

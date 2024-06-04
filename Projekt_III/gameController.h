@@ -17,11 +17,11 @@ class gameController {
     bool parseMove(std::string& move, std::vector<int>& positions);
     bool firstRun;
     void switchPlayer();
-    void updateGame();
+    void updateGameStatus();
     void makeAiMove();
     int convertToMoveIndex(int row, int col) const;
     gameStatus getGameStatus() const;
-    void isGameOver();
+    bool isGameOver();
     int movesWithoutCapture;
     int blackPieces;
     int whitePieces;
