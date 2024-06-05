@@ -1,13 +1,13 @@
 #include "gameController.h"
 
 gameController::gameController(CheckersBoard& b, Player& p1, Player& p2)
-    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(1), whitePieces(2) {
+    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(12), whitePieces(12) {
     // Rozpoczęcie gry
     status = RUNNING;
+
+    serv_sock = -1;
     // Oznacza pierwszy ruch
     firstRun = true;
-    // Jeśli pierwszy jest czarny to pierwszy, jeśli nie to drugi zaczyna
-    currentPlayer = (player1.getPlayerColor() == BLACK) ? &player1 : &player2;
 }
 
 void gameController::convertMove(int playerMove, int& row, int& col) {
@@ -106,11 +106,8 @@ void gameController::makeAiMove() {
     if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
         status = WRONG_MOVE;
     }
-    std::cout << "ruch z :" << fromRow << ", " << fromCol << std::endl;
-    std::cout << "ruch do :" << toRow << ", " << toCol << std::endl;
-    std::cout << std::endl
-              << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
-              << convertToMoveIndex(toRow, toCol) << "." << std::endl
+    std::cout << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
+              << convertToMoveIndex(toRow, toCol) << std::endl
               << std::endl;
 
     // Akutalizacja ilości pionków na planszy
@@ -118,7 +115,7 @@ void gameController::makeAiMove() {
 
     if (isCapture) {  // Jest bicie
         // Ustalenie jakiego koloru gracz teraz jest
-        std::cout << "Zawodnik(komputer): "
+        std::cout << "Komputer: "
                   << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny" : "biały")
                   << " przeprowadził bicie" << std::endl;
 
@@ -160,6 +157,9 @@ bool gameController::isGameOver() {
 }
 
 void gameController::game() {
+    // Jeśli pierwszy jest czarny to pierwszy, jeśli nie to drugi zaczyna
+    currentPlayer = (player1.getPlayerColor() == BLACK) ? &player1 : &player2;
+
     std::cout << "Komputer gra kolorem: "
               << (player1.getPlayerColor() == BLACK ? "czarnym" : "białym") << std::endl;
     std::cout << "Człowiek gra kolorem: "
@@ -239,4 +239,126 @@ void gameController::game() {
         firstRun = false;
         updateGameStatus();
     }
+}
+int gameController::makeAiNetMove() {
+    if (firstRun && currentPlayer->getPlayerColor() == WHITE) {
+        std::cout << "wychodze" << std::endl;
+        return 0;
+    }
+    if (currentPlayer->getPlayerColor() == player1.getPlayerColor()) {
+        // Odebranie ruchu funkcji heurystycznej
+        Move aiMove = currentPlayer->getAiMove();
+        // Przypisanie ruchów pod odpwiednie indeksy
+        int fromRow = aiMove.fromRow;
+        int fromCol = aiMove.fromCol;
+        int toRow = aiMove.toRow;
+        int toCol = aiMove.toCol;
+        int fromPos;
+        int toPos;
+
+        // Ruch na swojej planszy w celu odchaczenia ruchu
+        if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+            return -1;
+        }
+        // Konwersja indeksów na pozycje 1-32
+        fromPos = convertToMoveIndex(fromRow, fromCol);
+        toPos = convertToMoveIndex(toRow, toCol);
+
+        // Sprawdzenie, czy ruch jest bicia czy zwykły ruch
+        bool isCapture = std::abs(fromRow - toRow) == 2 && std::abs(fromCol - toCol) == 2;
+
+        // Utworzenie stringa z ruchem
+        std::string stringPos;
+        if (isCapture) {
+            stringPos = std::to_string(fromPos) + "x" + std::to_string(toPos);
+        } else {
+            stringPos = std::to_string(fromPos) + "-" + std::to_string(toPos);
+        }
+
+        // Wysłanie stringa przez socket
+        if (write(serv_sock, stringPos.c_str(), stringPos.length()) < 0) {
+            std::cerr << "Error: Wysłanie ruchu!" << std::endl;
+            return -1;
+        }
+    }
+    printf("Czekam na ruch przeciwnika ...\n");
+
+    return 0;
+}
+
+int gameController::enemyMove() {
+    char buf[BUFSPACE];
+    int n = read(serv_sock, buf, sizeof(buf));
+    if (n < 0) {
+        std::cerr << "Error: Odebranie ruchu!" << std::endl;
+        return -1;
+    }
+    if (n == 0) {
+        std::cerr << "Broker zamknął połączenie!" << std::endl;
+        return -1;
+    }
+    buf[n] = 0;
+    switchPlayer();
+    std::vector<int> positions;
+    std::string enemyMove(buf);
+    std::cout << "ruch przeciwnika: " << enemyMove << std::endl;
+    std::cout << "kolor: " << currentPlayer->getPlayerColor() << std::endl;
+    if (parseMove(enemyMove, positions) && positions.size() == 2) {
+        int from = positions[0];
+        int to = positions[1];
+        int fromRow, fromCol, toRow, toCol;
+        convertMove(from, fromRow, fromCol);
+        convertMove(to, toRow, toCol);
+        if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+            std::cerr << "Error: Nieprawidłowy ruch przeciwnika!" << std::endl;
+            std::cerr << "tutaj" << std::endl;
+            return -1;
+        }
+    } else {
+        std::cerr << "Error: Nieprawidłowy format ruchu przeciwnika!" << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+void gameController::brokerGame() {
+    // Przypisanie pod aktualnego gracza AI
+    currentPlayer = &player1;
+    while (1) {
+        // ruch mojego programu, jak błąd zwraca -1
+        if (makeAiNetMove() < 0) {
+            return;
+        }
+        if (enemyMove() < 0) {
+            return;
+        }
+        switchPlayer();
+        firstRun = false;
+    }
+}
+
+void gameController::connectToBroker(std::string ipAddress, int ipPort) {
+    struct sockaddr_in serv_addr;
+    struct hostent* serv_hostent;
+
+    serv_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (serv_sock < 0) {
+        perror("socket");
+        exit(errno);
+    }
+    serv_hostent = gethostbyname(ipAddress.c_str());
+    if (serv_hostent == 0) {
+        fprintf(stderr, "Nieznany adres IP %s\n", ipAddress.c_str());
+        exit(-1);
+    }
+    serv_addr.sin_family = AF_INET;
+    memcpy(&serv_addr.sin_addr, serv_hostent->h_addr, serv_hostent->h_length);
+    serv_addr.sin_port = htons(ipPort);
+
+    std::cout << "Łączenie się z serwerem ...\n";
+    if (connect(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("connect");
+        exit(-1);
+    }
+    printf("Polaczenie nawiazane, zaczynamy gre ...\n");
 }
