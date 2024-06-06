@@ -51,30 +51,28 @@ void CheckersBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 void CheckersBoard::initializeBoard() {
-    for (int row = 0; row < 8; ++row) {
-        for (int col = 0; col < 8; ++col) {
-            // Inicjalizacja czarnych pól
-            if ((row < 3) && ((row + col) % 2 == 1)) {
-                // Umieszczanie czarnych pionków w pierwszych trzech wierszach na czarnych polach
-                board[row][col] = Field(MAN, BLACK);
-                // Inicjalizacja białych
-            } else if ((row > 4) && ((row + col) % 2 == 1)) {
-                // Umieszczanie białych pionków w ostatnich trzech wierszach na czarnych polach
-                board[row][col] = Field(MAN, WHITE);
-            } else {
-                // Pozostałe pola są puste
-                board[row][col] = Field();
-            }
-        }
-    }
-    // board[6][1] = Field(MAN, BLACK);
-    // board[6][3] = Field(MAN, BLACK);
-    // board[1][2] = Field(MAN, WHITE);
-    // board[0][1] = Field(MAN, BLACK);
-    // board[1][2] = Field(MAN, WHITE);
-    // board[3][4] = Field(MAN, WHITE);
-    // board[5][6] = Field(MAN, WHITE);
+    // for (int row = 0; row < 8; ++row) {
+    //     for (int col = 0; col < 8; ++col) {
+    //         // Inicjalizacja czarnych pól
+    //         if ((row < 3) && ((row + col) % 2 == 1)) {
+    //             // Umieszczanie czarnych pionków w pierwszych trzech wierszach na czarnych polach
+    //             board[row][col] = Field(MAN, BLACK);
+    //             // Inicjalizacja białych
+    //         } else if ((row > 4) && ((row + col) % 2 == 1)) {
+    //             // Umieszczanie białych pionków w ostatnich trzech wierszach na czarnych polach
+    //             board[row][col] = Field(MAN, WHITE);
+    //         } else {
+    //             // Pozostałe pola są puste
+    //             board[row][col] = Field();
+    //         }
+    //     }
+    // }
+    board[3][0] = Field(MAN, BLACK);
+    board[4][1] = Field(MAN, WHITE);
+    board[6][3] = Field(MAN, WHITE);
+    board[6][5] = Field(MAN, WHITE);
 
+    
 }
 
 bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol,
@@ -132,8 +130,22 @@ bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol
                  abs(colDiff) == 1) {
             return true;
         }
-        // Sprawdzenie logiki bicia
-        else if (abs(rowDiff) == 2 && abs(colDiff) == 2) {
+        // Sprawdzenie logiki bicia dla pionka czarnego
+        else if (board[fromRow][fromCol].getColor() == BLACK && rowDiff == 2 && abs(colDiff) == 2) {
+            int middleRow = (fromRow + toRow) / 2;
+            int middleCol = (fromCol + toCol) / 2;
+            // Jeśli na polu środkowym znajduje się przeciwnik i nie pole nie jest puste(brak
+            // pionka)
+            if (board[middleRow][middleCol].getColor() != NO_COLOR &&
+                board[middleRow][middleCol].getColor() != board[fromRow][fromCol].getColor()) {
+                return true;
+            } else {
+                // std::cerr << "Error: Nieprawidłowy ruch bicia!" << std::endl;
+                return false;
+            }
+            // Sprawdzenie logiki bicia dla pionka białego
+        } else if (board[fromRow][fromCol].getColor() == WHITE && rowDiff == -2 &&
+                   abs(colDiff) == 2) {
             int middleRow = (fromRow + toRow) / 2;
             int middleCol = (fromCol + toCol) / 2;
             // Jeśli na polu środkowym znajduje się przeciwnik
@@ -144,13 +156,14 @@ bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol
                 // std::cerr << "Error: Nieprawidłowy ruch bicia!" << std::endl;
                 return false;
             }
-        }  // W przeciwnym razie jak zadany został zły ruch
+        }
+        // W przeciwnym razie jak zadany został zły ruch
         else {
             // std::cerr << "Error: Nieprawidłowy ruch pionka!" << std::endl;
             return false;
         }
     }
-     
+
     // Sprawdzenie logiki ruchu damki (KING)
     if (board[fromRow][fromCol].getType() == KING) {
         // Damka może się poruszać o jeden w dowolnym kierunku
@@ -173,56 +186,104 @@ bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol
             return false;
         }
     }
-    return true;
+    return false;
 }
 
 FieldType CheckersBoard::getFieldType(int row, int col) const { return board[row][col].getType(); }
 
-std::vector<Move> CheckersBoard::getAllPossibleMoves(PieceColor playerColor) {
-    // Wektor przechowujący wszystkie możliwe ruchy
+std::vector<Move> CheckersBoard::getPossibleMoves(PieceColor playerColor) {
     std::vector<Move> moves;
+    std::vector<Move> captureMoves;
+
     // Iteracja po wszystkich wierszach
     for (int row = 0; row < 8; ++row) {
         // Iteracja po wszystkich kolumnach
         for (int col = 0; col < 8; ++col) {
             // Sprawdzenie, czy na danym polu znajduje się pionek koloru gracza
             if (board[row][col].getColor() == playerColor) {
-                // Tablice definiujące przesunięcia dla ruchu na ukos o jedno pole (normalny ruch)
-                int dRow[] = {-1, -1, 1, 1};
-                int dCol[] = {-1, 1, -1, 1};
-
-                // Tablice definiujące przesunięcia dla ruchu na ukos o dwa pola (bicie)
-                int dRowCapture[] = {-2, -2, 2, 2};
-                int dColCapture[] = {-2, 2, -2, 2};
-
-                // Sprawdzenie wszystkich możliwych przesunięć o jedno pole na ukos
-                for (int i = 0; i < 4; ++i) {
-                    // Nowe współrzędne po przesunięciu
-                    int newRow = row + dRow[i];
-                    int newCol = col + dCol[i];
-                    // Sprawdzamy, czy ruch jest poprawny
-                    if (isCorrectMove(row, col, newRow, newCol, playerColor)) {
-                        // Jeśli ruch jest poprawny dodajemy go do wektora
-                        moves.push_back({row, col, newRow, newCol});
-                    }
-                }
-                
-                // Sprawdzamy wszystkie możliwe przesunięcia o dwa pola na ukos (bicie)
-                for (int i = 0; i < 4; ++i) {
-                    // Nowe współrzędne po przesunięciu
-                    int newRow = row + dRowCapture[i];
-                    int newCol = col + dColCapture[i];
-                    // Sprawdzamy, czy ruch jest poprawny
-                    if (isCorrectMove(row, col, newRow, newCol, playerColor)) {
-                        // Jeśli ruch jest poprawny dodajemy go do wektora
-                        moves.push_back({row, col, newRow, newCol});
-                    }
+                findCaptureMoves(captureMoves, row, col, playerColor);
+                // Sprawdzenie wszystkich możliwych przesunięć o jedno pole na ukos (normalny ruch)
+                if (captureMoves.empty()) {
+                    findNormalMoves(moves, row, col, playerColor);
                 }
             }
         }
     }
-    // Zwracamy wektor zawierający wszystkie możliwe ruchy
-    return moves;
+    // for (auto& move : moves) {
+    //     std::cout << "Ruch z: " << move.fromRow << "-" << move.fromCol << " do " << move.toRow
+    //               << "-" << move.toCol << std::endl;
+    // }
+    // Zwracamy ruchy bicia, jeśli istnieją, w przeciwnym razie zwracamy normalne ruchy
+    // Zwracamy ruchy bicia, jeśli istnieją, w przeciwnym razie zwracamy normalne ruchy
+    return !captureMoves.empty() ? captureMoves : moves;
+}
+
+void CheckersBoard::findCaptureMoves(std::vector<Move>& captureMoves, int row, int col,
+                                     PieceColor playerColor) {
+    int dRowCapture[] = {-2, -2, 2, 2};
+    int dColCapture[] = {-2, 2, -2, 2};
+
+    for (int i = 0; i < 4; ++i) {
+        int newRow = row + dRowCapture[i];
+        int newCol = col + dColCapture[i];
+        if (isCorrectMove(row, col, newRow, newCol, playerColor)) {
+            Move move = {row, col, newRow, newCol};
+            CheckersBoard tempBoard = *this;
+            int capturedRow = (row + newRow) / 2;
+            int capturedCol = (col + newCol) / 2;
+            // Aktualizacja tymczasowej planszy
+            tempBoard.board[capturedRow][capturedCol].clearSquare();  // Usuń zbitego pionka
+            tempBoard.board[newRow][newCol] = board[row][col];  // Przenieś pionek na nowe miejsce
+            tempBoard.board[row][col].clearSquare();            // Usuń pionek ze starego miejsca
+
+            tempBoard.recursiveCaptureMoves(move, newRow, newCol, playerColor);
+            captureMoves.push_back(move);
+        }
+    }
+}
+
+void CheckersBoard::findNormalMoves(std::vector<Move>& moves, int row, int col,
+                                    PieceColor playerColor) {
+    // Tablice definiujące przesunięcia dla ruchu na ukos o jedno pole (normalny ruch)
+    int dRow[] = {-1, -1, 1, 1};
+    int dCol[] = {-1, 1, -1, 1};
+
+    for (int i = 0; i < 4; ++i) {
+        int newRow = row + dRow[i];
+        int newCol = col + dCol[i];
+        if (isCorrectMove(row, col, newRow, newCol, playerColor)) {
+            moves.push_back({row, col, newRow, newCol});
+        }
+    }
+}
+
+void CheckersBoard::recursiveCaptureMoves(Move& move, int row, int col, PieceColor playerColor) {
+    int dRowCapture[] = {-2, -2, 2, 2};
+    int dColCapture[] = {-2, 2, -2, 2};
+    bool captureFound = false;
+
+    for (int i = 0; i < 4; ++i) {
+        int newRow = row + dRowCapture[i];
+        int newCol = col + dColCapture[i];
+        if (isCorrectMove(row, col, newRow, newCol, playerColor)) {
+            Move nextMove = {row, col, newRow, newCol};
+            CheckersBoard tempBoard = *this;
+            int capturedRow = (row + newRow) / 2;
+            int capturedCol = (col + newCol) / 2;
+            // Aktualizacja tymczasowej planszy
+            tempBoard.board[capturedRow][capturedCol].clearSquare();  // Usuń zbitego pionka
+            tempBoard.board[newRow][newCol] = board[row][col];  // Przenieś pionek na nowe miejsce
+            tempBoard.board[row][col].clearSquare();            // Usuń pionek ze starego miejsca
+
+            tempBoard.recursiveCaptureMoves(nextMove, newRow, newCol, playerColor);
+            move.nextCaptures.push_back(nextMove);
+            captureFound = true;
+        }
+    }
+
+    if (!captureFound) {
+        return;
+    }
 }
 
 int CheckersBoard::evaluateBoard(PieceColor playerColor) const {

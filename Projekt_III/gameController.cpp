@@ -94,53 +94,63 @@ void gameController::updateGameStatus() {
 void gameController::makeAiMove() {
     // Odebranie ruchu funkcji heurystycznej
     Move aiMove = currentPlayer->getAiMove();
-    // Przypisanie ruchów pod odpwiednie indeksy
-    int fromRow = aiMove.fromRow;
-    int fromCol = aiMove.fromCol;
-    int toRow = aiMove.toRow;
-    int toCol = aiMove.toCol;
-    // Zmienna potrzeba w przypadku promocji piona przy naliczaniu ilości ruchów bez
-    // bicia;
-    bool wantsPromotion = board.getFieldType(fromRow, fromCol) == MAN;
-    // Ruch pionka, jeśli nie można zmienić pozycji pionka jest false
-    if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
-        status = WRONG_MOVE;
-    }
-    std::cout << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
-              << convertToMoveIndex(toRow, toCol) << std::endl
-              << std::endl;
+    Move* currentMove = &aiMove;
+    std::cout<<"Rozmiar: "<<aiMove.nextCaptures.size()<<std::endl;
+    do {
+        int fromRow = currentMove->fromRow;
+        int fromCol = currentMove->fromCol;
+        int toRow = currentMove->toRow;
+        int toCol = currentMove->toCol;
 
-    // Akutalizacja ilości pionków na planszy
-    bool isCapture = std::abs(toRow - fromRow) == 2;
+        // Ruch pionka, jeśli nie można zmienić pozycji pionka, jest false
+        if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+            status = WRONG_MOVE;
+            return;
+        }
 
-    if (isCapture) {  // Jest bicie
-        // Ustalenie jakiego koloru gracz teraz jest
-        std::cout << "Komputer: "
-                  << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny" : "biały")
-                  << " przeprowadził bicie" << std::endl;
+        std::cout << std::endl<<"Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
+                  << convertToMoveIndex(toRow, toCol) << std::endl;
 
-        PieceColor opponentColor = (currentPlayer->getPlayerColor() == BLACK) ? WHITE : BLACK;
-        if (opponentColor == WHITE) {  // Jeśli jest czarny
-            whitePieces--;             // Zmniejszamy ilość jego pionków
+        // Aktualizacja ilości pionków na planszy
+        bool isCapture = std::abs(toRow - fromRow) == 2;
+
+        if (isCapture) {  // Jest bicie
+            // Ustalenie jakiego koloru gracz teraz jest
+            std::cout << "    oraz bicie"<<std::endl;
+                    //   << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny" : "biały")
+                    //   << " przeprowadził bicie" << std::endl;
+
+            PieceColor opponentColor = (currentPlayer->getPlayerColor() == BLACK) ? WHITE : BLACK;
+            if (opponentColor == WHITE) {  // Jeśli jest czarny
+                whitePieces--;             // Zmniejszamy ilość jego pionków
+            } else {
+                blackPieces--;
+            }
+        }
+
+        // Zmienna potrzebna w przypadku promocji piona przy naliczaniu ilości ruchów bez bicia;
+        bool wantsPromotion = board.getFieldType(currentMove->fromRow, currentMove->fromCol) == MAN;
+
+        // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek (bo muszą być kolejne)
+        if (board.getFieldType(currentMove->toRow, currentMove->toCol) == MAN) {
+            movesWithoutCapture = 0;  // Licznik na zero jeśli było bicie
+        } else if (board.getFieldType(currentMove->toRow, currentMove->toCol) == KING && !wantsPromotion) {
+            movesWithoutCapture++;  // Zwiększenie ilości ruchów bez bicia
+            if (movesWithoutCapture == 20) {
+                status = DRAFT;
+            }
+        }
+
+        // Aktualizacja statusu gry, sprawdzenie czy ktoś wygrał po każdym ruchu
+        isGameOver();
+
+        // Przejście do kolejnego bicia, jeśli istnieje
+        if (!currentMove->nextCaptures.empty()) {
+            currentMove = &currentMove->nextCaptures.front();
         } else {
-            blackPieces--;
+            break;
         }
-    }
-    // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek(bo muszą być
-    // kolejne)
-    if (isCapture || board.getFieldType(toRow, toCol) == MAN) {
-        movesWithoutCapture = 0;  // Licznik na zero jeśli było bicie
-        // Jeśli ruszyła się damka i nie było bicia oraz pionek dopiero nie wszedł
-        // na pole promowane
-    } else if (board.getFieldType(toRow, toCol) == KING && !wantsPromotion) {
-        movesWithoutCapture++;  // Zwiększenie ilości ruchów bez bicia
-        if (movesWithoutCapture == 20) {
-            status = DRAFT;
-        }
-    }
-    // Aktulizacja statusu gry, sprawdzenie czy ktoś wygrał po każdym ruchu
-    isGameOver();
-    // Aktualizacja gracza
+    } while (true);
 }
 gameStatus gameController::getGameStatus() const { return status; }
 
@@ -242,7 +252,6 @@ void gameController::game() {
 }
 int gameController::makeAiNetMove() {
     if (firstRun && currentPlayer->getPlayerColor() == WHITE) {
-        std::cout << "wychodze" << std::endl;
         return 0;
     }
     if (currentPlayer->getPlayerColor() == player1.getPlayerColor()) {
@@ -256,7 +265,8 @@ int gameController::makeAiNetMove() {
         int fromPos;
         int toPos;
 
-        // Ruch na swojej planszy w celu odchaczenia ruchu
+        // Ruch na swojej planszy w celu odchaczenia ruchu, jeśli jest więcej niż
+        // jedno bicie to patrz niżej
         if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
             return -1;
         }
@@ -274,7 +284,24 @@ int gameController::makeAiNetMove() {
         } else {
             stringPos = std::to_string(fromPos) + "-" + std::to_string(toPos);
         }
+        // Iterowanie przez nextCaptures, aby dodać ruchy wielokrotne
+        Move* currentMove = &aiMove;
 
+        while (!currentMove->nextCaptures.empty()) {
+            currentMove = &currentMove->nextCaptures.front();
+            fromRow = currentMove->fromRow;
+            fromCol = currentMove->fromCol;
+            toRow = currentMove->toRow;
+            toCol = currentMove->toCol;
+
+            fromPos = convertToMoveIndex(fromRow, fromCol);
+            toPos = convertToMoveIndex(toRow, toCol);
+
+            stringPos += "x" + std::to_string(toPos);
+
+            // Ruch na swojej planszy w celu odchaczenia ruchu
+            currentPlayer->makeMove(fromRow, fromCol, toRow, toCol);
+        }
         // Wysłanie stringa przez socket
         if (write(serv_sock, stringPos.c_str(), stringPos.length()) < 0) {
             std::cerr << "Error: Wysłanie ruchu!" << std::endl;
@@ -303,16 +330,17 @@ int gameController::enemyMove() {
     std::string enemyMove(buf);
     std::cout << "ruch przeciwnika: " << enemyMove << std::endl;
     std::cout << "kolor: " << currentPlayer->getPlayerColor() << std::endl;
-    if (parseMove(enemyMove, positions) && positions.size() == 2) {
-        int from = positions[0];
-        int to = positions[1];
-        int fromRow, fromCol, toRow, toCol;
-        convertMove(from, fromRow, fromCol);
-        convertMove(to, toRow, toCol);
-        if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
-            std::cerr << "Error: Nieprawidłowy ruch przeciwnika!" << std::endl;
-            std::cerr << "tutaj" << std::endl;
-            return -1;
+    if (parseMove(enemyMove, positions) && positions.size() >= 2) {
+        for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
+            int from = positions[i];
+            int to = positions[i + 1];
+            int fromRow, fromCol, toRow, toCol;
+            convertMove(from, fromRow, fromCol);
+            convertMove(to, toRow, toCol);
+            if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
+                std::cerr << "Error: Nieprawidłowy ruch przeciwnika!" << std::endl;
+                return -1;
+            }
         }
     } else {
         std::cerr << "Error: Nieprawidłowy format ruchu przeciwnika!" << std::endl;

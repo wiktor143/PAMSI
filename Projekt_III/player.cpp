@@ -19,7 +19,7 @@ Move Player::getAiMove() {
     std::vector<Move> bestMoves;
     int bestValue = -10000;
 
-    for (auto& move : board.getAllPossibleMoves(playerColor)) {
+    for (auto& move : board.getPossibleMoves(playerColor)) {
         CheckersBoard newBoard = board;
         newBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
         int boardValue = miniMax(newBoard, 8 - 1, -10000, 10000, false);  // Zaczynamy od minimalizującego przeciwnika
@@ -48,7 +48,7 @@ int Player::miniMax(CheckersBoard board, int depth, int alpha, int beta, bool ma
 
     if (maximizingPlayer) {
         int maxEval = -10000;
-        for (auto& move : board.getAllPossibleMoves(BLACK)) {
+        for (auto& move : board.getPossibleMoves(BLACK)) {
             CheckersBoard newBoard = board;
             newBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
             int eval = miniMax(newBoard, depth - 1, alpha, beta, false);
@@ -61,7 +61,7 @@ int Player::miniMax(CheckersBoard board, int depth, int alpha, int beta, bool ma
         return maxEval;
     } else {
         int minEval = 10000;
-        for (auto& move : board.getAllPossibleMoves(WHITE)) {
+        for (auto& move : board.getPossibleMoves(WHITE)) {
             CheckersBoard newBoard = board;
             newBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
             int eval = miniMax(newBoard, depth - 1, alpha, beta, true);
