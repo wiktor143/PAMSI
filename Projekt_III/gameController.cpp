@@ -1,7 +1,14 @@
 #include "gameController.h"
 
-gameController::gameController(CheckersBoard& b, Player& p1, Player& p2)
-    : board(b), player1(p1), player2(p2), movesWithoutCapture(0), blackPieces(12), whitePieces(12) {
+gameController::gameController(CheckersBoard& b, Player& p1, Player& p2, int d, long int rs)
+    : board(b),
+      player1(p1),
+      player2(p2),
+      movesWithoutCapture(0),
+      blackPieces(12),
+      whitePieces(12),
+      depth(d),
+      randomSeed(rs) {
     // Rozpoczęcie gry
     status = RUNNING;
 
@@ -93,7 +100,7 @@ void gameController::updateGameStatus() {
 }
 void gameController::makeAiMove() {
     // Odebranie ruchu funkcji heurystycznej
-    Move aiMove = currentPlayer->getAiMove();
+    Move aiMove = currentPlayer->getAiMove(depth);
     Move* currentMove = &aiMove;
     // Sprawdzenie dostępnych ruchów dla gracza
     std::vector<Move> possibleMoves = board.getPossibleMoves(currentPlayer->getPlayerColor());
@@ -109,7 +116,9 @@ void gameController::makeAiMove() {
         int fromCol = currentMove->fromCol;
         int toRow = currentMove->toRow;
         int toCol = currentMove->toCol;
-
+        // Zmienna potrzebna w przypadku promocji piona przy naliczaniu ilości ruchów bez bicia;
+        bool wantsPromotion = board.getFieldType(currentMove->fromRow, currentMove->fromCol) == MAN;
+        
         // Ruch pionka, jeśli nie można zmienić pozycji pionka, jest false
         if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
             status = WRONG_MOVE;
@@ -136,9 +145,6 @@ void gameController::makeAiMove() {
                 blackPieces--;
             }
         }
-
-        // Zmienna potrzebna w przypadku promocji piona przy naliczaniu ilości ruchów bez bicia;
-        bool wantsPromotion = board.getFieldType(currentMove->fromRow, currentMove->fromCol) == MAN;
 
         // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek (bo muszą być kolejne)
         if (board.getFieldType(currentMove->toRow, currentMove->toCol) == MAN) {
@@ -223,7 +229,7 @@ void gameController::game() {
             std::cout << "Na planszy jest: " << blackPieces << "-czarnych, " << whitePieces
                       << "-białych." << std::endl;
             std::cout << "Ilość ruchów samymi damkami: " << movesWithoutCapture << std::endl;
-            std::cout << "Podaj ruch lub 'exit' aby zakończyć: ";
+            std::cout << "Podaj ruch lub \"exit\" aby zakończyć: ";
             std::cin >> move;
 
             if (move == "exit") {
@@ -234,7 +240,6 @@ void gameController::game() {
 
             if (parseMove(move, positions) && getGameStatus() == RUNNING) {
                 bool promotionOccurred = false;
-                std::cout << "tu jestme" << std::endl;
                 bool performedCapture = false;
                 for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
                     int from = positions[i];
@@ -311,7 +316,7 @@ int gameController::makeAiNetMove() {
     }
     if (currentPlayer->getPlayerColor() == player1.getPlayerColor()) {
         // Odebranie ruchu funkcji heurystycznej
-        Move aiMove = currentPlayer->getAiMove();
+        Move aiMove = currentPlayer->getAiMove(depth);
         // Przypisanie ruchów pod odpwiednie indeksy
         int fromRow = aiMove.fromRow;
         int fromCol = aiMove.fromCol;
@@ -359,7 +364,7 @@ int gameController::makeAiNetMove() {
             currentPlayer->makeMove(fromRow, fromCol, toRow, toCol);
         }
         // Wysłanie stringa przez socket
-        std::cout<<"co wysyłam: "<<stringPos<<std::endl;
+        std::cout << "co wysyłam: " << stringPos << std::endl;
         if (write(serv_sock, stringPos.c_str(), stringPos.length()) < 0) {
             std::cerr << "Error: Wysłanie ruchu!" << std::endl;
             return -1;
@@ -385,8 +390,8 @@ int gameController::enemyMove() {
     switchPlayer();
     std::vector<int> positions;
     std::string enemyMove(buf);
-    std::cout << "ruch przeciwnika: " << enemyMove << std::endl;
-    std::cout << "kolor: " << currentPlayer->getPlayerColor() << std::endl;
+    std::cout << "Ruch przeciwnika: " << enemyMove << std::endl;
+    // std::cout << "kolor: " << currentPlayer->getPlayerColor() << std::endl;
     if (parseMove(enemyMove, positions) && positions.size() >= 2) {
         for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
             int from = positions[i];

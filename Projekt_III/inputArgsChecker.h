@@ -9,7 +9,7 @@ class inputArgsChecker {
     std::string getInterfaceType() const;
     std::string getTurn() const;
     int getDepth() const;
-    int getRandomSeed() const;
+    long int getRandomSeed() const;
     std::string getIpAddress() const;
     int getIpPort() const;
     void howToUse() const;
@@ -20,7 +20,7 @@ class inputArgsChecker {
     std::string interfaceType;
     std::string turn;
     int depth;
-    int randomSeed;
+    long int randomSeed;
     std::string ipAddress;
     int ipPort;
 };

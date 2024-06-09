@@ -67,12 +67,14 @@ void CheckersBoard::initializeBoard() {
             }
         }
     }
-    // board[0][1] = Field(MAN, BLACK);
-    // board[1][0] = Field(MAN, WHITE);
-    // board[1][2] = Field(MAN, WHITE);
+    // board[1][2] = Field(MAN, BLACK);
+    // // board[1][0] = Field(MAN, WHITE);
     // board[2][3] = Field(MAN, WHITE);
+    // board[4][5] = Field(MAN, WHITE);
 
-    // board[6][5] = Field(MAN, WHITE);
+    // // board[2][3] = Field(MAN, WHITE);
+
+    // // board[6][5] = Field(MAN, WHITE);
 }
 
 bool CheckersBoard::isCorrectMove(int fromRow, int fromCol, int toRow, int toCol,
@@ -301,4 +303,23 @@ int CheckersBoard::evaluateBoard(PieceColor playerColor) const {
         }
     }
     return score;
+    
+}
+
+
+bool CheckersBoard::isGameOver() const {
+    int blackPieces = 0;
+    int whitePieces = 0;
+
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            if (board[row][col].getColor() == BLACK) {
+                blackPieces++;
+            } else if (board[row][col].getColor() == WHITE) {
+                whitePieces++;
+            }
+        }
+    }
+
+    return blackPieces == 0 || whitePieces == 0;
 }

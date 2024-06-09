@@ -50,5 +50,8 @@ class CheckersBoard {
     std::vector<Move> getPossibleMoves(PieceColor playerColor);
 
     int evaluateBoard(PieceColor playerColor) const;  // Funkcja oceny stanu planszy
+
+    bool isGameOver() const ;
+
 };
 #endif

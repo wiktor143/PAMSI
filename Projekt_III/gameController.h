@@ -38,9 +38,11 @@ class gameController {
     int movesWithoutCapture;
     int blackPieces;
     int whitePieces;
+    int depth;
+    long int randomSeed;
 
    public:
-    gameController(CheckersBoard& board, Player& player1, Player& player2);
+    gameController(CheckersBoard& board, Player& player1, Player& player2, int depth, long int randomSeed);
     void game();
     void brokerGame();
     void connectToBroker(std::string ipAddress, int ipPort);

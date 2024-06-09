@@ -3,7 +3,7 @@
 inputArgsChecker::inputArgsChecker(int argc, char* argv[])
     : valid(false), randomSeed(0), ipAddress("localhost"), ipPort(12345) {
     progName = argv[0];
-
+    std::cout << "argc: " << argc << std::endl;
     if (argc < 4 || argc > 7) {
         return;
     }
@@ -12,10 +12,10 @@ inputArgsChecker::inputArgsChecker(int argc, char* argv[])
         interfaceType = argv[1];
         turn = argv[2];
         depth = std::atoi(argv[3]);
-
-        if (argc == 6 || argc == 7) {
+        if (argc == 5) {
             randomSeed = std::atoi(argv[4]);
         }
+        std::cout << "czytanie arg: " << randomSeed << std::endl;
         if (argc == 7) {
             ipAddress = argv[5];
             ipPort = std::atoi(argv[6]);
@@ -39,7 +39,7 @@ std::string inputArgsChecker::getTurn() const { return turn; }
 
 int inputArgsChecker::getDepth() const { return depth; }
 
-int inputArgsChecker::getRandomSeed() const { return randomSeed; }
+long int inputArgsChecker::getRandomSeed() const { return randomSeed; }
 
 std::string inputArgsChecker::getIpAddress() const { return ipAddress; }
 
