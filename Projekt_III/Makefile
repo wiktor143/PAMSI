@@ -22,5 +22,6 @@ inputArgsChecker.o: inputArgsChecker.cpp
 
 player.o: player.cpp
 	g++ $(CPPFLAGS) -c player.cpp
+	
 clean:
 	rm *.o prog
