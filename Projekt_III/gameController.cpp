@@ -17,6 +17,7 @@ gameController::gameController(CheckersBoard& b, Player& p1, Player& p2, int d, 
     firstRun = true;
 }
 
+// Konwertuje ruch gracza na współrzędne planszy.
 void gameController::convertMove(int playerMove, int& row, int& col) {
     // Na początku zmiejszamy ruch o jedną wartość, ponieważ w tablicy iterujemy
     // od zera, następnie dzielimy przez 4, ponieważ są 4 pola(aktywne-czarne), w każdym wierszu.
@@ -36,7 +37,10 @@ void gameController::convertMove(int playerMove, int& row, int& col) {
     col = ((playerMove - 1) % 4) * 2 + ((row % 2 == 0) ? 1 : 0);
 }
 
+// Konwertuje współrzędne planszy na indeks ruchu.
 int gameController::convertToMoveIndex(int row, int col) const { return row * 4 + col / 2 + 1; }
+
+// Parsuje ruch z formatu tekstowego na listę pozycji.
 bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
     // Strumień o typie stringa, podobne do std::cin, ale
     // zamiast czytać ze standardowego wejścia czytamy ze stringa
@@ -81,9 +85,12 @@ bool gameController::parseMove(std::string& move, std::vector<int>& positions) {
     return true;
 }
 
+// Przełącza aktualnego gracza na drugiego gracza.
 void gameController::switchPlayer() {
     currentPlayer = (currentPlayer == &player1) ? &player2 : &player1;
 }
+
+// Aktualizuje status gry na podstawie aktualnego stanu planszy i liczby pionków.
 void gameController::updateGameStatus() {
     // Warunki sprawdzające stan gry
     if (getGameStatus() == QUITED) {
@@ -98,6 +105,8 @@ void gameController::updateGameStatus() {
         std::cerr << "Error: Nieprawidłowy ruch!" << std::endl;
     }
 }
+
+// Wykonuje ruch przez AI, wybierając najlepszy ruch na podstawie algorytmu minimax.
 void gameController::makeAiMove() {
     // Odebranie ruchu funkcji heurystycznej
     Move aiMove = currentPlayer->getAiMove(depth);
@@ -116,18 +125,16 @@ void gameController::makeAiMove() {
         int fromCol = currentMove->fromCol;
         int toRow = currentMove->toRow;
         int toCol = currentMove->toCol;
-        // Zmienna potrzebna w przypadku promocji piona przy naliczaniu ilości ruchów bez bicia;
+        // Zmienna potrzebna w przypadku promocji piona przy naliczaniu ilości ruchów bez bicia
         bool wantsPromotion = board.getFieldType(currentMove->fromRow, currentMove->fromCol) == MAN;
-        
+
         // Ruch pionka, jeśli nie można zmienić pozycji pionka, jest false
         if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
             status = WRONG_MOVE;
             return;
         }
 
-        std::cout << std::endl
-                  << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "
-                  << convertToMoveIndex(toRow, toCol) << std::endl;
+        std::cout << std::endl << "Komputer wykonał ruch z " << convertToMoveIndex(fromRow, fromCol) << " do "<< convertToMoveIndex(toRow, toCol) << std::endl;
 
         // Aktualizacja ilości pionków na planszy
         bool isCapture = std::abs(toRow - fromRow) == 2;
@@ -135,12 +142,10 @@ void gameController::makeAiMove() {
         if (isCapture) {  // Jest bicie
             // Ustalenie jakiego koloru gracz teraz jest
             std::cout << "    oraz bicie" << std::endl;
-            //   << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny" : "biały")
-            //   << " przeprowadził bicie" << std::endl;
 
             PieceColor opponentColor = (currentPlayer->getPlayerColor() == BLACK) ? WHITE : BLACK;
             if (opponentColor == WHITE) {  // Jeśli jest czarny
-                whitePieces--;             // Zmniejszamy ilość jego pionków
+                whitePieces--;             // Zmniejszamy ilość pionków przeciwnika
             } else {
                 blackPieces--;
             }
@@ -149,8 +154,7 @@ void gameController::makeAiMove() {
         // Jeśli pojawiło się bicie lub ruszył się jakikolwiek pionek (bo muszą być kolejne)
         if (board.getFieldType(currentMove->toRow, currentMove->toCol) == MAN) {
             movesWithoutCapture = 0;  // Licznik na zero jeśli było bicie
-        } else if (board.getFieldType(currentMove->toRow, currentMove->toCol) == KING &&
-                   !wantsPromotion) {
+        } else if (board.getFieldType(currentMove->toRow, currentMove->toCol) == KING && !wantsPromotion) {
             movesWithoutCapture++;  // Zwiększenie ilości ruchów bez bicia
             if (movesWithoutCapture == 20) {
                 status = DRAFT;
@@ -167,8 +171,11 @@ void gameController::makeAiMove() {
         }
     } while (true);
 }
+
+// Zwraca aktualny status gry.
 gameStatus gameController::getGameStatus() const { return status; }
 
+// Sprawdza, czy gra się zakończyła.
 bool gameController::isGameOver() {
     if (blackPieces == 0) {
         status = WIN_WHITE;
@@ -181,6 +188,7 @@ bool gameController::isGameOver() {
     return false;
 }
 
+// Główna metoda uruchamiająca grę.
 void gameController::game() {
     // Jeśli pierwszy jest czarny to pierwszy, jeśli nie to drugi zaczyna
     currentPlayer = (player1.getPlayerColor() == BLACK) ? &player1 : &player2;
@@ -209,10 +217,11 @@ void gameController::game() {
             std::vector<Move> possibleMoves =
                 board.getPossibleMoves(currentPlayer->getPlayerColor());
             bool hasCaptureMove = false;
+            // Sprawdzenie bic
             for (const Move& m : possibleMoves) {
+                // Pojedyncze bicie
                 if (std::abs(m.fromRow - m.toRow) == 2) {
                     hasCaptureMove = true;
-                    break;
                 }
             }
 
@@ -223,12 +232,8 @@ void gameController::game() {
                 break;
             }
 
-            std::cout << "Tura człowieka, ruch: "
-                      << (currentPlayer->getPlayerColor() == BLACK ? "czarnych." : "białych.")
-                      << std::endl;
-            std::cout << "Na planszy jest: " << blackPieces << "-czarnych, " << whitePieces
-                      << "-białych." << std::endl;
-            std::cout << "Ilość ruchów samymi damkami: " << movesWithoutCapture << std::endl;
+            std::cout << "Tura człowieka, ruch: " << (currentPlayer->getPlayerColor() == BLACK ? "czarnych." : "białych.") << std::endl;
+            std::cout << "Na planszy jest: " << blackPieces << "-czarnych, " << whitePieces << "-białych." << std::endl;
             std::cout << "Podaj ruch lub \"exit\" aby zakończyć: ";
             std::cin >> move;
 
@@ -257,8 +262,7 @@ void gameController::game() {
                     // Jeśli nastąpiła promocja w trakcie wielokrotnego bicia, zakończ ruch
                     if (promotionOccurred && isCapture && (fromRow == 0 || fromRow == 7)) {
                         // Wygrywa przeciwnik
-                        std::cerr << "Error: Bicie w ruchu wielokrotnym po awansie na damkę!"
-                                  << std::endl;
+                        std::cerr << "Error: Bicie w ruchu wielokrotnym po awansie na damkę!" << std::endl;
                         status = (currentPlayer->getPlayerColor() == BLACK) ? WIN_WHITE : WIN_BLACK;
                         break;
                     }
@@ -275,8 +279,7 @@ void gameController::game() {
                     }
                     if (isCapture) {
                         std::cout << "Zawodnik(człowiek): "
-                                  << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny"
-                                                                                 : "biały")
+                                  << ((currentPlayer->getPlayerColor() == BLACK) ? "czarny": "biały")
                                   << " przeprowadził bicie!" << std::endl;
 
                         PieceColor opponentColor =
@@ -310,10 +313,13 @@ void gameController::game() {
         updateGameStatus();
     }
 }
+
+// Funkcja wykonująca ruch AI w grze sieciowej.
 int gameController::makeAiNetMove() {
     if (firstRun && currentPlayer->getPlayerColor() == WHITE) {
         return 0;
     }
+    // Odebranie ruchu funkcji heurystycznej
     if (currentPlayer->getPlayerColor() == player1.getPlayerColor()) {
         // Odebranie ruchu funkcji heurystycznej
         Move aiMove = currentPlayer->getAiMove(depth);
@@ -364,7 +370,7 @@ int gameController::makeAiNetMove() {
             currentPlayer->makeMove(fromRow, fromCol, toRow, toCol);
         }
         // Wysłanie stringa przez socket
-        std::cout << "co wysyłam: " << stringPos << std::endl;
+        std::cout << "Przesyłam: " << stringPos << std::endl;
         if (write(serv_sock, stringPos.c_str(), stringPos.length()) < 0) {
             std::cerr << "Error: Wysłanie ruchu!" << std::endl;
             return -1;
@@ -375,6 +381,7 @@ int gameController::makeAiNetMove() {
     return 0;
 }
 
+// Funkcja odbierająca ruch przeciwnika w grze sieciowej.
 int gameController::enemyMove() {
     char buf[BUFSPACE];
     int n = read(serv_sock, buf, sizeof(buf));
@@ -419,14 +426,17 @@ void gameController::brokerGame() {
         if (makeAiNetMove() < 0) {
             return;
         }
+        // Oczekiwanie na ruch przeciwnika, jeśli wystąpi błąd zwraca -1
         if (enemyMove() < 0) {
             return;
         }
+        // Przełączanie gracza po każdym ruchu
         switchPlayer();
         firstRun = false;
     }
 }
 
+// Funkcja łącząca się z brokerem poprzez podany adres IP i port.
 void gameController::connectToBroker(std::string ipAddress, int ipPort) {
     struct sockaddr_in serv_addr;
     struct hostent* serv_hostent;
@@ -446,6 +456,7 @@ void gameController::connectToBroker(std::string ipAddress, int ipPort) {
     serv_addr.sin_port = htons(ipPort);
 
     std::cout << "Łączenie się z serwerem ...\n";
+    // Próba nawiązania połączenia
     if (connect(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect");
         exit(-1);
