@@ -61,3 +61,8 @@ int inputArgsChecker::getIpPort() const { return ipPort; }
 void inputArgsChecker::howToUse() const {
     std::cerr << "Poprawne wywołanie programu:" << std::endl << "  " << progName << " interface turn depth [random_seed] [ip_address ip_port]" << std::endl;
 }
+
+// Metoda zwracająca nazwę programu
+std::string inputArgsChecker::getProgName() const { 
+    return progName; 
+}

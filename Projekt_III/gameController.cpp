@@ -315,7 +315,7 @@ void gameController::game() {
 }
 
 // Funkcja wykonująca ruch AI w grze sieciowej.
-int gameController::makeAiNetMove() {
+int gameController::makeAiNetMove(const std::string progName) {
     if (firstRun && currentPlayer->getPlayerColor() == WHITE) {
         return 0;
     }
@@ -370,35 +370,34 @@ int gameController::makeAiNetMove() {
             currentPlayer->makeMove(fromRow, fromCol, toRow, toCol);
         }
         // Wysłanie stringa przez socket
-        std::cout << "Przesyłam: " << stringPos << std::endl;
+        std::cerr << progName <<" Przesyłam: " << stringPos << std::endl;
         if (write(serv_sock, stringPos.c_str(), stringPos.length()) < 0) {
-            std::cerr << "Error: Wysłanie ruchu!" << std::endl;
+            std::cerr << progName <<" Error: Wysłanie ruchu!" << std::endl;
             return -1;
         }
     }
-    printf("Czekam na ruch przeciwnika ...\n");
+    std::cerr<<progName<<" Czekam na ruch przeciwnika ..."<<std::endl;
 
     return 0;
 }
 
 // Funkcja odbierająca ruch przeciwnika w grze sieciowej.
-int gameController::enemyMove() {
+int gameController::enemyMove(const std::string progName) {
     char buf[BUFSPACE];
     int n = read(serv_sock, buf, sizeof(buf));
     if (n < 0) {
-        std::cerr << "Error: Odebranie ruchu!" << std::endl;
+        std::cerr << progName <<" Error: Odebranie ruchu!" << std::endl;
         return -1;
     }
     if (n == 0) {
-        std::cerr << "Broker zamknął połączenie!" << std::endl;
+        std::cerr << progName<<" Broker zamknął połączenie!" << std::endl;
         return -1;
     }
     buf[n] = 0;
     switchPlayer();
     std::vector<int> positions;
     std::string enemyMove(buf);
-    std::cout << "Ruch przeciwnika: " << enemyMove << std::endl;
-    // std::cout << "kolor: " << currentPlayer->getPlayerColor() << std::endl;
+    std::cerr << progName<<" Otrzymałem ruch przeciwnika: " << enemyMove << std::endl;
     if (parseMove(enemyMove, positions) && positions.size() >= 2) {
         for (int i = 0; i < static_cast<int>(positions.size() - 1); ++i) {
             int from = positions[i];
@@ -407,27 +406,27 @@ int gameController::enemyMove() {
             convertMove(from, fromRow, fromCol);
             convertMove(to, toRow, toCol);
             if (!currentPlayer->makeMove(fromRow, fromCol, toRow, toCol)) {
-                std::cerr << "Error: Nieprawidłowy ruch przeciwnika!" << std::endl;
+                std::cerr << progName<<" Error: Nieprawidłowy ruch przeciwnika!" << std::endl;
                 return -1;
             }
         }
     } else {
-        std::cerr << "Error: Nieprawidłowy format ruchu przeciwnika!" << std::endl;
+        std::cerr << progName<<" Error: Nieprawidłowy format ruchu przeciwnika!" << std::endl;
         return -1;
     }
     return 0;
 }
 
-void gameController::brokerGame() {
+void gameController::brokerGame(const std::string progName) {
     // Przypisanie pod aktualnego gracza AI
     currentPlayer = &player1;
     while (1) {
         // ruch mojego programu, jak błąd zwraca -1
-        if (makeAiNetMove() < 0) {
+        if (makeAiNetMove(progName) < 0) {
             return;
         }
         // Oczekiwanie na ruch przeciwnika, jeśli wystąpi błąd zwraca -1
-        if (enemyMove() < 0) {
+        if (enemyMove(progName) < 0) {
             return;
         }
         // Przełączanie gracza po każdym ruchu
@@ -437,7 +436,7 @@ void gameController::brokerGame() {
 }
 
 // Funkcja łącząca się z brokerem poprzez podany adres IP i port.
-void gameController::connectToBroker(std::string ipAddress, int ipPort) {
+void gameController::connectToBroker(const std::string progName, const std::string ipAddress,const int ipPort) {
     struct sockaddr_in serv_addr;
     struct hostent* serv_hostent;
 
@@ -455,11 +454,11 @@ void gameController::connectToBroker(std::string ipAddress, int ipPort) {
     memcpy(&serv_addr.sin_addr, serv_hostent->h_addr, serv_hostent->h_length);
     serv_addr.sin_port = htons(ipPort);
 
-    std::cout << "Łączenie się z serwerem ...\n";
+    std::cerr <<progName<< " Łączenie się z serwerem ..."<<std::endl;
     // Próba nawiązania połączenia
     if (connect(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect");
         exit(-1);
     }
-    printf("Polaczenie nawiazane, zaczynamy gre ...\n");
+    std::cerr<<progName<<" Polaczenie nawiazane, zaczynamy gre ..."<<std::endl;
 }

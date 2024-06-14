@@ -55,12 +55,16 @@ class gameController {
     void makeAiMove();
 
     // Wykonuje ruch przez AI z wykorzystaniem sieci.
+    // Parametry:
+    // - progName: nazwa programu.
     // Zwraca -1 w przypadku błędu w przeciwnym razie 0.
-    int makeAiNetMove();
+    int makeAiNetMove(const std::string progName);
 
     // Odczytanie ruchu przeciwnika.
+    // Parametry:
+    // - progName: nazwa programu.
     // Zwraca 0 jeśli ruch odebrany poprawnie, w przeciwnym razie -1.
-    int enemyMove();
+    int enemyMove(const std::string progName);
 
     // Konwertuje współrzędne planszy na indeks ruchu.
     // Parametry:
@@ -91,13 +95,16 @@ class gameController {
     void game();
 
     // Metoda uruchamiająca grę w trybie brokera.
-    void brokerGame();
+    // Parametry:
+    // - progName: nazwa programu.
+    void brokerGame(const std::string progName);
 
     // Łączy się z brokerem.
     // Parametry:
+    // - progName: nazwa programu.
     // - ipAddress: adres IP brokera.
     // - ipPort: port brokera.
-    void connectToBroker(std::string ipAddress, int ipPort);
+    void connectToBroker(const std::string progName, const std::string ipAddress,const  int ipPort);
 };
 
 #endif

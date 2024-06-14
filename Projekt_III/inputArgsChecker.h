@@ -50,5 +50,9 @@ class inputArgsChecker {
 
     // Metoda wyświetlająca informacje o tym, jak używać programu.
     void howToUse() const;
+
+    // Metoda zwracająca nazwę programu.
+    // Zwraca nazwę programu jako string.
+    std::string getProgName() const;
 };
 #endif

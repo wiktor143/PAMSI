@@ -52,8 +52,8 @@ int main(int argc, char *argv[]) {
         ctrl.game();  // Rozpoczęcie gry w trybie GUI
 
     } else if (argsChecker.getInterfaceType() == "NET") {
-        ctrl.connectToBroker(argsChecker.getIpAddress(), argsChecker.getIpPort());  // Połączenie z serwerem
-        ctrl.brokerGame();                              // Rozpoczęcie gry w trybie sieciowym
+        ctrl.connectToBroker(argsChecker.getProgName(), argsChecker.getIpAddress(), argsChecker.getIpPort());  // Połączenie z serwerem
+        ctrl.brokerGame(argsChecker.getProgName()); // Rozpoczęcie gry w trybie sieciowym
     }
     return 0;
 }
